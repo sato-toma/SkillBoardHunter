@@ -2,7 +2,7 @@
 
 ## Status
 
-Draft
+Complete
 
 ## Phase Status
 
@@ -10,7 +10,7 @@ Draft
 | --- | --- | --- |
 | Plan | Complete | `docs/development-plan.md` MVP-0 |
 | Change Scope | Complete | This document |
-| Detailed Design | Draft | Saga and persistence contract remain open |
+| Detailed Design | Complete | Saga, persistence contract, and port placement fixed |
 | Implementation | Not started |  |
 | Unit Test | Not started |  |
 | Functional Test | Not started |  |
@@ -71,18 +71,67 @@ Skillを1件登録し、自分のSkillとして表示・削除できる最小体
 
 実装前に仕様決定が必要な項目。未回答のまま永続化処理とRedux非同期接続の実装には進まない。
 
-- ReduxとPersistence Adapterを接続するMiddlewareはRedux-Saga、RTK Listener Middleware、Thunkのどれにするか
-  - 判断材料: 将来の再試行、同期、認証、複数アクションのワークフロー、既存のSaga経験、MVP-0の実装コスト
-  - Owner: プロダクトオーナー
-  - Decision point: Detailed Design完了前
-- 永続化ポートをDomain層またはApplication層のどこに置くか
-  - 判断材料: Domainの純粋性、ユースケースとの近さ、将来アダプターの差し替えやすさ
-  - Owner: プロダクトオーナー
-  - Decision point: Persistence Adapter実装前
-- 永続化ポートを同期APIまたは非同期APIのどちらで定義するか
-  - 判断材料: Web Storageの簡単さと、IndexedDB・Capacitor・WebサービスAPIへの移行性
-  - Owner: プロダクトオーナー
-  - Decision point: Persistence Adapter実装前
+現時点の未解決項目はありません。
+
+## Fixed Decisions for MVP-0
+
+この節の内容はMVP-0開始時点で確定とし、実装時の追加判断を不要にする。
+
+### 1) Reduxと永続化の接続方式
+
+- 採用: Redux-Saga
+- 役割: Sagaは副作用の接続層に限定し、Reducer・Domainルールは持たない
+- 目的: 将来の再試行、複数アクション連携、同期フロー拡張を見据えても接続層の差し替えを容易にする
+
+### 2) 永続化ポートの呼び出しモデル
+
+- 採用: 非同期API (`Promise`)
+- 理由: 現時点のWeb Storageは同期的に扱えるが、将来のIndexedDB、Capacitor、WebサービスAPIへ移行しやすくするため
+- 補足: 同期実装のAdapterは内部で`Promise.resolve`に包んで提供してよい
+
+### 3) 永続化エラー契約
+
+- 採用: 判別可能なエラー型 (discriminated union)
+- 目的: UI表示、リトライ制御、ログ分類を安定させる
+
+```ts
+export type SkillBoard = {
+  version: 1;
+  skills: { id: string; name: string }[];
+};
+
+export type PersistenceErrorKind =
+  | 'unavailable'
+  | 'read-failed'
+  | 'write-failed'
+  | 'delete-failed'
+  | 'invalid-data';
+
+export type PersistenceError = {
+  kind: PersistenceErrorKind;
+  message: string;
+  cause?: unknown;
+  recoverable: boolean;
+};
+
+export type Result<T, E> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+export interface SkillBoardPersistencePort {
+  load(): Promise<Result<SkillBoard, PersistenceError>>;
+  save(board: SkillBoard): Promise<Result<void, PersistenceError>>;
+  clear(): Promise<Result<void, PersistenceError>>;
+}
+```
+
+`invalid-data`は保存データのパースやバージョン不整合を含む。MVP-0では復元時にこのエラーを検出した場合、UIへ通知しつつ初期状態へフォールバックする。
+
+### 4) 永続化ポートの配置
+
+- 採用: `application` 層
+- 理由: Domain層の純粋性を保ち、永続化方式の変更点（Web Storage、IndexedDB、Capacitor、WebサービスAPI）を境界の外に隔離するため
+- 補足: Domainは`Skill`/`SkillBoard`のルールと検証に限定し、I/O契約は`application`が所有する
 
 ## User Flow and Acceptance Criteria
 
@@ -121,7 +170,7 @@ type SkillBoard = {
 };
 ```
 
-具体的なPersistence Portの配置、同期・非同期API、保存単位、エラー契約は、未解決の設計事項を決定してから確定する。ドメインとRedux ReducerはWeb Storage APIへ直接依存しない。
+Persistence Portは`SkillBoardPersistencePort`を採用し、非同期APIと判別可能なエラー型を固定する。保存単位はMVP-0ではBoard全体 (`SkillBoard`) とする。ドメインとRedux ReducerはWeb Storage APIへ直接依存しない。
 
 ## Implementation Design
 
@@ -129,7 +178,8 @@ type SkillBoard = {
 
 - `domain`: SkillとBoardの型、名前の検証
 - `store`: Redux Store、Slice、Reducer、Selectors
-- `application`または`persistence`: Persistence PortとWeb Storage Adapter。配置はOpen Questionsの決定後に確定する
+- `application`: Persistence Portの定義、ユースケース単位の入出力契約
+- `persistence` (infrastructure): Web Storage Adapterの実装。`application`のPortを実装する
 - `components`: 入力、一覧、削除操作、エラー表示
 - `app`: StoreとAdapterを組み立てるComposition Root
 
@@ -149,7 +199,7 @@ Reducerは副作用を持たない。ComponentはWeb Storageを直接呼び出�
 
 - 空のSkill名は登録せず、入力欄またはフォームにエラーを表示する
 - Web Storageへの保存・復元に失敗した場合は、ユーザーに再試行可能なエラーを表示する
-- 不正な保存データはそのまま画面状態へ流さず、初期状態へフォールバックするかエラー表示する方針を、Persistence Portのエラー契約とともに確定する
+- 不正な保存データはそのまま画面状態へ流さず、`invalid-data`として扱い、UI通知後に初期状態へフォールバックする
 
 ### Platform Considerations
 
@@ -191,7 +241,7 @@ Reducerは副作用を持たない。ComponentはWeb Storageを直接呼び出�
 
 - Service Workerの古いキャッシュが新しいアプリ資産を隠す可能性
 - Web Storageの保存失敗でReduxの状態と保存状態が不一致になる可能性
-- Redux非同期接続の選択によってエラー処理とテスト方法が変わる可能性
+- Sagaで副作用を扱う実装の逸脱により、Reducerへ副作用が混入する可能性
 
 ## Rollout and Recovery
 
@@ -205,12 +255,12 @@ Reducerは副作用を持たない。ComponentはWeb Storageを直接呼び出�
 | --- | --- | --- | --- |
 | Redux Toolkit + Web Storage Adapter | 将来の複数画面共有とMVPのローカル保存を両立できる | Redux接続と永続化の設計が必要 | 採用 |
 | React local state + Web Storage | 最小実装になる | 将来のBoard共有で状態管理を組み直す可能性がある | 不採用 |
-| Redux-Saga | 既存経験を活かせ、将来の複雑な非同期ワークフローに対応しやすい | MVP-0には過剰になる可能性がある | 未決定 |
-| RTK Listener Middleware / Thunk | MVP-0を軽量に実装しやすい | 将来の複雑なワークフローで再評価が必要 | 未決定 |
+| Redux-Saga | 既存経験を活かせ、将来の複雑な非同期ワークフローに対応しやすい | MVP-0には過剰になる可能性がある | 採用 |
+| RTK Listener Middleware / Thunk | MVP-0を軽量に実装しやすい | 将来の複雑なワークフローで再評価が必要 | 今回は不採用 |
 
 ## Implementation Checklist
 
-- [ ] Open Questionsを解決する
+- [x] Open Questionsを解決する
 - [ ] ADRを更新する
 - [ ] Vite + React + TypeScript環境を作成する
 - [ ] Redux StoreとBoard型を実装する
