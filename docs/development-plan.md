@@ -114,9 +114,12 @@ Skillを複数登録し、自分のSkill一覧として扱えるようにする�
 * [ ] 複数のSkillを登録できる
 * [ ] Skillを編集できる
 * [ ] Skillの説明を登録できる
-* [ ] Skillを一覧表示できる
-* [ ] TOMLとしてExportできる
-* [ ] TOMLからImportできる
+* [ ] Skillをボードとして表示できる
+* [ ] Skillに習熟レベルを設定できる
+* [ ] Skillに実績（Evidence）を紐付けて表示できる
+* [ ] Skillの親子関係（TRUNK/LEAF）を設定できる
+
+注記: TOMLのExport/Importは将来課題として扱い、初期の体験づくりを優先する。
 
 ### MVP-2
 
