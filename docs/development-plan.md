@@ -202,6 +202,7 @@ Export / Import
 * OSS活動からのSkill推定
 * P2PによるBoard交換
 * マルチデバイス同期
+* 多言語対応（i18n）
 
 ---
 

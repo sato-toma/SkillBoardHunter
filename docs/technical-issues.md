@@ -26,4 +26,17 @@
 
 ## Open Issues
 
-現時点で登録された課題はありません。
+### TI-0001: 多言語対応（i18n）の導入タイミングと境界
+
+- Status: Open
+- Discovered: 2026-08-20
+- Context: 多言語対応は必要だが、初回環境（MVP-0の最小導線）では必須ではない。
+- Impact: 先にUI文字列を直書きすると、後で置換コストが増える可能性がある。
+- Current understanding: MVP-0ではi18nライブラリを導入せず、機能価値の検証を優先する。
+- Options considered:
+	- A. MVP-0からi18n基盤を導入する
+	- B. MVP-0は導入しない。MVP-1以降で導入する
+- Next action: MVP-1のPlanフェーズでi18n導入範囲（UI文言、保存データ、テスト）を確定する。
+- Revisit when: MVP-1開始時、または2言語以上のUI提供要件が確定した時点。
+- Related design/ADR: `docs/development-plan.md`, `docs/detailed-design-mvp-0.md`
+- Resolution and validation:

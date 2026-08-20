@@ -44,6 +44,7 @@ Skillを1件登録し、自分のSkillとして表示・削除できる最小体
 - Skillの説明、習熟度、経験、Evidence
 - Goal、Skill Graph、SkillRelation
 - TOML Import/Export
+- 多言語対応（i18n）
 - Capacitorによるネイティブアプリ化
 - Webサービス、認証、複数端末同期
 - 複雑な保存競合やバックグラウンド同期
