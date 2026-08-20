@@ -45,4 +45,6 @@
 - Keep changes focused and preserve unrelated user changes.
 - Prefer existing project patterns over new abstractions.
 - Avoid adding comments unless they explain non-obvious behavior.
+- When comments are needed, write them in English.
+- Write commit messages in simple English that a high school student can understand.
 - Do not commit or create branches unless explicitly requested.
