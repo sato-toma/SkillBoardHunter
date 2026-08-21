@@ -10,9 +10,9 @@ Draft
 | --- | --- | --- |
 | Plan | Complete | User request 2026-08-21 |
 | Change Scope | Complete | This document |
-| Detailed Design | In progress | Level model and external sync rules need final confirmation |
-| Implementation | Not started |  |
-| Unit Test | Not started |  |
+| Detailed Design | Complete | Goal起点2D投影、経験値・レベル・状態ラベルの暫定仕様を確定 |
+| Implementation | Complete | Goal起点の表示＋Skillレベル縦切り |
+| Unit Test | In progress | Redux状態遷移テストを追加。実行は未確認 |
 | Functional Test | Not started |  |
 
 ## Related Documents
@@ -87,21 +87,29 @@ Goalを先に置き、その達成過程として必要なSkillとEvidenceが積
 - 同一性の最終決定はユーザー操作で確定できる
 - 自動加算はMVP-1では実装せず、手動登録Evidenceのみ扱う
 
+### Decisions for the first vertical slice
+
+- 表示はGoalを起点にSkillを並べる2D投影とする。内部データと表示方式は分離し、将来の3D/4D表示を妨げない。
+- 経験値はユーザー個人のSkill経験値として扱い、`level` は0-100の経験値を1-5へ変換して表示する。
+- Skillの状態ラベルは `未経験`、`学習中`、`実践中`、`熟練` の固定値とする。自由タグと他ユーザーからの評価値は将来計画に残す。
+- 今回の縦切りではGoalの表示、Skillの追加、経験値・レベル・状態ラベルの編集を対象とし、Evidence、親子編集、Importは後続とする。
+- 既存MVP-0の保存データを読めるよう、新しいSkill属性は任意フィールドとして追加する。
+
 ## Open Questions
 
-- 習熟レベルの最終スケール（1-5 / 1-10 / ラベル制）
+- 習熟レベルの将来の最終スケール（現在は1-5で実装）
   - Owner: プロダクトオーナー
   - Deadline or decision point: UI実装前
-- 実績の最小データ形（タイトルのみ / 日付付き / URL付き）
+- 実績の最小データ形（今回の縦切りでは未実装）
   - Owner: プロダクトオーナー
   - Deadline or decision point: State設計前
-- 習熟度の表示を「レベルのみ」にするか、「経験値 + レベル」にするか
+- Skill自体の評価値と個人経験値の分離
   - Owner: プロダクトオーナー
   - Deadline or decision point: Component設計前
 - 外部サービス連携時の加算式（イベント1件ごとに固定値 / 種別ごと重み）
   - Owner: プロダクトオーナー
   - Deadline or decision point: 自動加算機能のImplementation前
-- ボード表示形式（フラットカード+インデント / グラフビュー）
+- 2D以外の表示形式（3D/4Dを含む）と投影ルール
   - Owner: プロダクトオーナー
   - Deadline or decision point: Component設計前
 - 同一候補の提示条件（完全一致のみ / 類似一致を含む）
@@ -187,6 +195,27 @@ export type GoalNode = {
   requiredSkillIds: string[];
 };
 ```
+
+今回の実装では、既存MVP-0との互換性を保つため、現在の `Skill` に次の任意属性を追加する。
+
+```ts
+type Skill = {
+  id: string;
+  name: string;
+  xp?: number; // 0-100, ユーザー個人の経験値
+  level?: 1 | 2 | 3 | 4 | 5;
+  status?: 'new' | 'learning' | 'practicing' | 'mastered';
+};
+
+type Goal = {
+  id: string;
+  title: string;
+  vision?: string;
+};
+```
+
+`xp` は20刻みでレベル1-5へ投影する。2DボードはGoalとSkillの現在状態を表示するビューであり、
+将来の3D/4D表示は同じBoardデータに対する別の投影として追加する。
 
 - Persistenceは将来課題のため、この段階ではランタイム状態のみを対象にする
 - 既存MVP-0の保存層は壊さず、体験確認に必要な表示中心で段階導入する
@@ -328,7 +357,7 @@ UI action
 - [x] Change Scope: affected modules, data, platforms, and risks identified
 - [ ] Detailed Design: open questions resolved and design approved
 - [ ] Update ADR if the architecture changes
-- [ ] Implementation: production code completed
+- [x] Implementation: production code completed
 - [ ] Unit Test: focused unit tests added and passing
 - [ ] Functional Test: acceptance criteria verified
 - [ ] Run validation commands and record results
