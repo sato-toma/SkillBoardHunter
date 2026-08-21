@@ -5,6 +5,7 @@ import {
     skillAdded,
     skillBoardReducer,
     skillRemoved,
+    skillUpdated,
     type SkillBoardState,
 } from "./skillBoardSlice";
 
@@ -40,5 +41,32 @@ describe("skillBoardSlice reducer", () => {
         );
         expect(loaded.errorMessage).toBeNull();
         expect(loaded.board.skills).toHaveLength(1);
+    });
+
+    it("updates a skill's experience state", () => {
+        const state: SkillBoardState = {
+            board: {
+                version: 1,
+                skills: [{ id: "s1", name: "React", xp: 40, level: 3 }],
+            },
+            errorMessage: null,
+        };
+
+        const updated = skillBoardReducer(
+            state,
+            skillUpdated({
+                id: "s1",
+                name: "React",
+                xp: 80,
+                level: 5,
+                status: "practicing",
+            }),
+        );
+
+        expect(updated.board.skills[0]).toMatchObject({
+            xp: 80,
+            level: 5,
+            status: "practicing",
+        });
     });
 });
