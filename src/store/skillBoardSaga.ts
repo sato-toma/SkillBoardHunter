@@ -2,32 +2,33 @@ import type { SagaIterator } from "redux-saga";
 import { call, put, select, takeEvery } from "redux-saga/effects";
 import type { SkillBoardPersistencePort } from "../application/skillBoardPersistencePort";
 import {
-    normalizeSkillName,
     levelFromXp,
+    normalizeSkillName,
     normalizeXp,
-    sampleSkillBoard,
     type Skill,
     type SkillBoard,
     type SkillStatus,
+    sampleSkillBoard,
 } from "../domain/skillBoard";
 import {
     addSkillRequested,
     appStarted,
     boardLoaded,
-    persistenceFailed,
-    removeSkillRequested,
-    removeGoalRequested,
-    updateGoalRequested,
-    updateSkillRequested,
-    updateSkillDependenciesRequested,
+    goalAdded,
+    goalRemoved,
+    goalUpdated,
     loadSampleRequested,
+    persistenceFailed,
+    removeGoalRequested,
+    removeSkillRequested,
     type SkillBoardState,
     skillAdded,
     skillRemoved,
     skillUpdated,
-    goalUpdated,
-    goalAdded,
-    goalRemoved,
+    updateGoalRequested,
+    updateSkillDependenciesRequested,
+    updateSkillPositionRequested,
+    updateSkillRequested,
 } from "./skillBoardSlice";
 
 type SkillBoardRootState = {
@@ -93,6 +94,8 @@ function* handleAddSkillRequested(
         xp: 0,
         level: 1,
         status: "new",
+        layoutX: action.payload.layoutX,
+        layoutY: action.payload.layoutY,
     };
     const nextBoard: SkillBoard = {
         ...currentBoard,
@@ -168,6 +171,39 @@ function* handleUpdateSkillDependenciesRequested(
                 ? {
                       ...skill,
                       prerequisiteSkillIds: action.payload.prerequisiteSkillIds,
+                  }
+                : skill,
+        ),
+    };
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
+        yield call([port, port.save], nextBoard);
+
+    if (!saveResult.ok) {
+        yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
+        return;
+    }
+
+    const updatedSkill = nextBoard.skills.find(
+        (skill) => skill.id === action.payload.id,
+    );
+    if (updatedSkill) yield put(skillUpdated(updatedSkill));
+}
+
+function* handleUpdateSkillPositionRequested(
+    port: SkillBoardPersistencePort,
+    action: ReturnType<typeof updateSkillPositionRequested>,
+): SagaIterator {
+    const currentBoard: SkillBoard = yield select(
+        (state: SkillBoardRootState) => state.skillBoard.board,
+    );
+    const nextBoard: SkillBoard = {
+        ...currentBoard,
+        skills: currentBoard.skills.map((skill) =>
+            skill.id === action.payload.id
+                ? {
+                      ...skill,
+                      layoutX: action.payload.layoutX,
+                      layoutY: action.payload.layoutY,
                   }
                 : skill,
         ),
@@ -323,6 +359,11 @@ export function* createSkillBoardSaga(
     yield takeEvery(
         updateSkillDependenciesRequested.type,
         handleUpdateSkillDependenciesRequested,
+        port,
+    );
+    yield takeEvery(
+        updateSkillPositionRequested.type,
+        handleUpdateSkillPositionRequested,
         port,
     );
     yield takeEvery(loadSampleRequested.type, handleLoadSampleRequested, port);

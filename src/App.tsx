@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
-import type { SkillStatus } from "./domain/skillBoard";
-import { SkillDetailPanel } from "./components/SkillDetailPanel";
-import { SkillNodeList } from "./components/SkillNodeList";
+import { GrowthQuestDeck } from "./components/GrowthQuestDeck";
+import { SkillMap } from "./components/SkillMap";
+import { SkillMapDetail } from "./components/SkillMapDetail";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import {
     addSkillRequested,
     appStarted,
+    clearLevelUp,
     loadSampleRequested,
+    questAdded,
+    questCompleted,
     updateSkillDependenciesRequested,
+    updateSkillPositionRequested,
     updateSkillRequested,
 } from "./store/skillBoardSlice";
 import "./App.css";
@@ -15,7 +19,6 @@ import "./App.css";
 function App() {
     const dispatch = useAppDispatch();
     const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<"tree" | "board">("tree");
     const board = useAppSelector((state) => state.skillBoard.board);
     const skills = board.skills;
     const goal = board.goals?.[0];
@@ -23,25 +26,6 @@ function App() {
         .map((id) => skills.find((skill) => skill.id === id))
         .filter((skill): skill is (typeof skills)[number] => Boolean(skill));
     const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
-    const isSkillUnlocked = (skill: (typeof skills)[number]) =>
-        (skill.xp ?? 0) > 0 &&
-        (skill.prerequisiteSkillIds ?? []).every(
-            (id) =>
-                (skills.find((candidate) => candidate.id === id)?.xp ?? 0) >=
-                60,
-        );
-    const missingPrerequisites = (skill: (typeof skills)[number]) =>
-        (skill.prerequisiteSkillIds ?? [])
-            .map((id) => skills.find((candidate) => candidate.id === id))
-            .filter(
-                (candidate): candidate is (typeof skills)[number] =>
-                    candidate !== undefined && (candidate.xp ?? 0) < 60,
-            );
-    const dependentSkills = selectedSkill
-        ? skills.filter((skill) =>
-              skill.prerequisiteSkillIds?.includes(selectedSkill.id),
-          )
-        : [];
     const goalProgress = requiredSkills.length
         ? Math.round(
               requiredSkills.reduce(
@@ -55,6 +39,11 @@ function App() {
         requiredSkills.every((skill) => (skill.xp ?? 0) >= 60);
     const errorMessage = useAppSelector(
         (state) => state.skillBoard.errorMessage,
+    );
+    const quests = useAppSelector((state) => state.skillBoard.quests ?? []);
+    const evidence = useAppSelector((state) => state.skillBoard.evidence ?? []);
+    const lastLevelUp = useAppSelector(
+        (state) => state.skillBoard.lastLevelUp ?? null,
     );
 
     useEffect(() => {
@@ -73,31 +62,33 @@ function App() {
         }
     }, [skills, selectedSkillId]);
 
-    const handleSkillChange = (id: string, xp: number, status: SkillStatus) => {
-        dispatch(updateSkillRequested({ id, xp, status }));
-    };
-
-    const handleAddSibling = (name: string) => {
-        if (!selectedSkill) return;
+    const handleToggleLink = (fromId: string, toId: string) => {
+        const target = skills.find((skill) => skill.id === toId);
+        if (!target || fromId === toId) return;
+        const current = target.prerequisiteSkillIds ?? [];
+        const next = current.includes(fromId)
+            ? current.filter((id) => id !== fromId)
+            : [...current, fromId];
         dispatch(
-            addSkillRequested({
-                name,
-                prerequisiteSkillIds: selectedSkill.prerequisiteSkillIds,
+            updateSkillDependenciesRequested({
+                id: toId,
+                prerequisiteSkillIds: next,
             }),
         );
     };
 
-    const handleCommit = (skill: (typeof skills)[number]) => {
-        handleSkillChange(
-            skill.id,
-            Math.min(100, (skill.xp ?? 0) + 10),
-            "practicing",
+    const handleQuickAdd = (name: string) => {
+        if (!selectedSkill) return;
+        const offsetX = (selectedSkill.layoutX ?? 460) + 120;
+        const offsetY = (selectedSkill.layoutY ?? 260) + 60;
+        dispatch(
+            addSkillRequested({
+                name,
+                prerequisiteSkillIds: [selectedSkill.id],
+                layoutX: offsetX,
+                layoutY: offsetY,
+            }),
         );
-    };
-
-    const handleUnlock = (skill: (typeof skills)[number]) => {
-        if (missingPrerequisites(skill).length > 0) return;
-        handleSkillChange(skill.id, 100, skill.status ?? "learning");
     };
 
     return (
@@ -119,6 +110,20 @@ function App() {
                     Load sample
                 </button>
             </header>
+            <GrowthQuestDeck
+                goal={goal}
+                skills={skills}
+                quests={quests}
+                evidence={evidence}
+                levelUp={lastLevelUp}
+                onAddQuest={(quest) => dispatch(questAdded(quest))}
+                onCompleteQuest={(questId, questEvidence) =>
+                    dispatch(
+                        questCompleted({ questId, evidence: questEvidence }),
+                    )
+                }
+                onDismissLevelUp={() => dispatch(clearLevelUp())}
+            />
             <section className="goal-status" aria-label="Goal progress">
                 <div className="goal-status-title">
                     <span className="eyebrow">CURRENT GOAL</span>
@@ -135,72 +140,51 @@ function App() {
                     ))}
                 </div>
             </section>
-            <section
-                className="progression-panel"
-                aria-label="Skill progression"
-            >
-                <div
-                    className="mode-tabs"
-                    role="tablist"
-                    aria-label="Progression mode"
-                >
-                    {(["tree", "board"] as const).map((mode) => (
-                        <button
-                            className={
-                                viewMode === mode
-                                    ? "mode-tab active"
-                                    : "mode-tab"
-                            }
-                            key={mode}
-                            type="button"
-                            onClick={() => setViewMode(mode)}
-                        >
-                            {mode === "tree" ? "Git Tree" : "Skill Board"}
-                        </button>
-                    ))}
-                </div>
-                {selectedSkill && (
-                    <SkillDetailPanel
-                        selectedSkill={selectedSkill}
-                        skills={skills}
-                        viewMode={viewMode}
-                        dependentSkills={dependentSkills}
-                        missingPrerequisites={missingPrerequisites(
-                            selectedSkill,
-                        )}
-                        isUnlocked={isSkillUnlocked}
-                        onXpChange={(skill, xp) =>
-                            handleSkillChange(
-                                skill.id,
+            <section className="skill-map-panel" aria-label="Skill map">
+                <SkillMap
+                    skills={skills}
+                    selectedSkillId={selectedSkillId}
+                    onSelect={setSelectedSkillId}
+                    onToggleLink={handleToggleLink}
+                    onMove={(id, x, y) =>
+                        dispatch(
+                            updateSkillPositionRequested({
+                                id,
+                                layoutX: x,
+                                layoutY: y,
+                            }),
+                        )
+                    }
+                />
+                <SkillMapDetail
+                    selectedSkill={selectedSkill}
+                    skills={skills}
+                    onXpChange={(skill, xp) =>
+                        dispatch(
+                            updateSkillRequested({
+                                id: skill.id,
                                 xp,
-                                skill.status ?? "new",
-                            )
-                        }
-                        onCommit={() => handleCommit(selectedSkill)}
-                        onDependencyChange={(skill, prerequisiteSkillIds) =>
-                            dispatch(
-                                updateSkillDependenciesRequested({
-                                    id: skill.id,
-                                    prerequisiteSkillIds,
-                                }),
-                            )
-                        }
-                        onUnlock={handleUnlock}
-                        onAddSibling={handleAddSibling}
-                    />
-                )}
+                                status: skill.status ?? "new",
+                            }),
+                        )
+                    }
+                    onRemovePrerequisite={(skill, prerequisiteId) =>
+                        dispatch(
+                            updateSkillDependenciesRequested({
+                                id: skill.id,
+                                prerequisiteSkillIds: (
+                                    skill.prerequisiteSkillIds ?? []
+                                ).filter((id) => id !== prerequisiteId),
+                            }),
+                        )
+                    }
+                    onQuickAdd={handleQuickAdd}
+                />
                 {errorMessage && (
                     <p role="alert" className="error-text">
                         {errorMessage}
                     </p>
                 )}
-
-                <SkillNodeList
-                    skills={skills}
-                    viewMode={viewMode}
-                    selectedSkillId={selectedSkillId}
-                    onSelect={(skill) => setSelectedSkillId(skill.id)}
-                />
             </section>
         </main>
     );

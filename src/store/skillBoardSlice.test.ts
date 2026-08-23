@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
     boardLoaded,
+    goalAdded,
+    goalRemoved,
+    goalUpdated,
     persistenceFailed,
+    type SkillBoardState,
     skillAdded,
     skillBoardReducer,
     skillRemoved,
     skillUpdated,
-    goalAdded,
-    goalRemoved,
-    goalUpdated,
-    type SkillBoardState,
 } from "./skillBoardSlice";
 
 const initialState: SkillBoardState = {
