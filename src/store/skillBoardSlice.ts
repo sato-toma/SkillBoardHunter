@@ -22,8 +22,13 @@ const skillBoardSlice = createSlice({
     initialState,
     reducers: {
         appStarted: () => undefined,
-        addSkillRequested: (_state, _action: PayloadAction<{ name: string }>) =>
-            undefined,
+        addSkillRequested: (
+            _state,
+            _action: PayloadAction<{
+                name: string;
+                prerequisiteSkillIds?: string[];
+            }>,
+        ) => undefined,
         removeSkillRequested: (
             _state,
             _action: PayloadAction<{ id: string }>,
@@ -36,14 +41,29 @@ const skillBoardSlice = createSlice({
                 status: SkillStatus;
             }>,
         ) => undefined,
+        updateSkillDependenciesRequested: (
+            _state,
+            _action: PayloadAction<{
+                id: string;
+                prerequisiteSkillIds: string[];
+            }>,
+        ) => undefined,
+        loadSampleRequested: () => undefined,
         updateGoalRequested: (
             _state,
             _action: PayloadAction<{
+                id?: string;
                 title: string;
                 vision: string;
                 requiredSkillIds: string[];
             }>,
         ) => undefined,
+        removeGoalRequested: (_state, _action: PayloadAction<{ id: string }>) =>
+            undefined,
+        goalAdded: (state, action: PayloadAction<Goal>) => {
+            state.board.goals = [...(state.board.goals ?? []), action.payload];
+            state.errorMessage = null;
+        },
         boardLoaded: (state, action: PayloadAction<SkillBoard>) => {
             state.board = action.payload;
             state.errorMessage = null;
@@ -65,7 +85,15 @@ const skillBoardSlice = createSlice({
             state.errorMessage = null;
         },
         goalUpdated: (state, action: PayloadAction<Goal>) => {
-            state.board.goals = [action.payload];
+            state.board.goals = (state.board.goals ?? []).map((goal) =>
+                goal.id === action.payload.id ? action.payload : goal,
+            );
+            state.errorMessage = null;
+        },
+        goalRemoved: (state, action: PayloadAction<{ id: string }>) => {
+            state.board.goals = (state.board.goals ?? []).filter(
+                (goal) => goal.id !== action.payload.id,
+            );
             state.errorMessage = null;
         },
         persistenceFailed: (
@@ -82,12 +110,17 @@ export const {
     addSkillRequested,
     removeSkillRequested,
     updateSkillRequested,
+    updateSkillDependenciesRequested,
+    loadSampleRequested,
     updateGoalRequested,
+    removeGoalRequested,
     boardLoaded,
     skillAdded,
     skillRemoved,
     skillUpdated,
     goalUpdated,
+    goalAdded,
+    goalRemoved,
     persistenceFailed,
 } = skillBoardSlice.actions;
 

@@ -6,6 +6,9 @@ import {
     skillBoardReducer,
     skillRemoved,
     skillUpdated,
+    goalAdded,
+    goalRemoved,
+    goalUpdated,
     type SkillBoardState,
 } from "./skillBoardSlice";
 
@@ -68,5 +71,38 @@ describe("skillBoardSlice reducer", () => {
             level: 5,
             status: "practicing",
         });
+    });
+
+    it("keeps multiple goals and their skill links independent", () => {
+        const firstGoal = {
+            id: "g1",
+            title: "Ship a product",
+            vision: "Make useful tools",
+            requiredSkillIds: ["s1"],
+        };
+        const secondGoal = {
+            id: "g2",
+            title: "Write a book",
+            vision: "Share what I learn",
+            requiredSkillIds: ["s2"],
+        };
+
+        const withGoals = skillBoardReducer(
+            skillBoardReducer(initialState, goalAdded(firstGoal)),
+            goalAdded(secondGoal),
+        );
+        expect(withGoals.board.goals).toEqual([firstGoal, secondGoal]);
+
+        const updated = skillBoardReducer(
+            withGoals,
+            goalUpdated({ ...firstGoal, requiredSkillIds: ["s1", "s2"] }),
+        );
+        expect(updated.board.goals).toEqual([
+            { ...firstGoal, requiredSkillIds: ["s1", "s2"] },
+            secondGoal,
+        ]);
+
+        const removed = skillBoardReducer(updated, goalRemoved({ id: "g1" }));
+        expect(removed.board.goals).toEqual([secondGoal]);
     });
 });

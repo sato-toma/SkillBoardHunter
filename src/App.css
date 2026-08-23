@@ -69,6 +69,283 @@
     color: #173f3a;
 }
 
+.goal-list,
+.view-switcher {
+    border: 0;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.goal-tab,
+.view-button {
+    border: 1px solid #9bb3a8;
+    padding: 6px 9px;
+    background: transparent;
+    color: #42665d;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+}
+
+.goal-tab.active,
+.view-button.active {
+    background: #173f3a;
+    color: #fffdf8;
+}
+
+.goal-actions,
+.view-switcher {
+    align-items: center;
+}
+
+.goal-progress {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 6px;
+}
+
+.goal-progress div {
+    display: flex;
+    justify-content: space-between;
+    color: #42665d;
+    font-size: 13px;
+}
+
+.goal-progress progress {
+    width: 100%;
+    accent-color: #d06443;
+}
+
+.view-switcher {
+    justify-content: flex-end;
+    margin-top: -4px;
+}
+
+.view-switcher > span {
+    color: #61736c;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.skill-detail {
+    border: 1px solid #9bb3a8;
+    padding: 16px;
+    background: #fffdf8;
+}
+
+.commit-button {
+    margin-top: 16px;
+    border: 1px solid #9b4f32;
+    padding: 10px 14px;
+    background: #d06443;
+    color: #fffdf8;
+    cursor: pointer;
+}
+
+.commit-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.skill-detail-header,
+.skill-detail-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.skill-detail h3 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.skill-detail-summary {
+    justify-content: flex-start;
+    margin: 12px 0 18px;
+    color: #61736c;
+    font-size: 13px;
+}
+
+.unlock-state {
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
+.unlock-state.unlocked {
+    color: #173f3a;
+}
+
+.unlock-state.locked {
+    color: #c35c38;
+}
+
+.detail-dependencies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    border: 0;
+    margin: 18px 0 0;
+    padding: 0;
+}
+
+.detail-dependencies legend {
+    width: 100%;
+    margin-bottom: 6px;
+    color: #61736c;
+    font-size: 13px;
+}
+
+.detail-impact {
+    margin: 16px 0 0;
+    color: #52615d;
+    font-size: 13px;
+}
+
+.detail-blocked {
+    margin: 8px 0 0;
+    color: #c35c38;
+    font-size: 13px;
+}
+
+.unlock-button {
+    margin-top: 16px;
+    border: 1px solid #173f3a;
+    padding: 10px 14px;
+    background: #173f3a;
+    color: #fffdf8;
+    cursor: pointer;
+}
+
+.unlock-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.goal-list legend,
+.view-switcher legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+}
+
+.tree-view li.skill-card {
+    border-left: 4px solid #9bb3a8;
+}
+
+.tree-view {
+    display: block;
+}
+
+.tree-node {
+    list-style: none;
+}
+
+.tree-node-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 68px;
+}
+
+.tree-node-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 12px;
+    border-left: 1px solid #cbd8cf;
+}
+
+.tree-node-row::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    width: 16px;
+    border-top: 1px solid #cbd8cf;
+}
+
+.tree-toggle,
+.tree-toggle-placeholder {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    flex: 0 0 24px;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border: 1px solid #9bb3a8;
+    background: #fffdf8;
+    color: #173f3a;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.tree-toggle-placeholder {
+    border-color: transparent;
+    background: transparent;
+}
+
+.tree-skill-card {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    min-height: 0;
+    margin: 4px 0;
+    padding: 12px;
+}
+
+.tree-children {
+    margin: 0;
+    padding-left: 24px;
+    border-left: 1px solid #cbd8cf;
+}
+
+.tree-view .tree-relationships {
+    display: grid;
+    gap: 4px;
+    border-top: 1px solid #d8e2d9;
+    padding-top: 12px;
+    color: #61736c;
+    font-size: 12px;
+}
+
+.tree-view .tree-relationships strong {
+    color: #173f3a;
+}
+
+.graph-view {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.board-view .skill-card {
+    min-height: 180px;
+    border-top-color: #9bb3a8;
+}
+
+.board-view .dependency-control {
+    display: none;
+}
+
+.relation-line {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    height: 16px;
+    border-left: 1px dashed #d06443;
+}
+
 .board-heading {
     display: flex;
     align-items: end;
@@ -112,6 +389,59 @@
     gap: 16px;
 }
 
+.skill-list-row {
+    list-style: none;
+}
+
+.skill-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #cbd8cf;
+    padding: 10px 12px;
+    background: #fffdf8;
+    color: #173f3a;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.skill-list-item:hover,
+.skill-list-item.selected {
+    border-color: #d06443;
+}
+
+.skill-list-item-name {
+    overflow: hidden;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.skill-list-item-progress {
+    display: flex;
+    align-items: center;
+    flex: 0 0 150px;
+    gap: 10px;
+    color: #61736c;
+    font-size: 12px;
+}
+
+.skill-list-item-progress .node-progress {
+    flex: 1;
+}
+
+.tree-node-row .skill-list-item {
+    flex: 1;
+}
+
+.tree-node-row {
+    width: 100%;
+}
+
 .skill-card {
     display: flex;
     flex-direction: column;
@@ -123,6 +453,31 @@
     border-bottom: 1px solid #cbd8cf;
     padding: 18px;
     background: rgba(255, 255, 255, 0.72);
+}
+
+.node-state {
+    color: #c35c38;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.node-progress {
+    height: 6px;
+    background: #d8e2d9;
+}
+
+.node-progress span {
+    display: block;
+    height: 100%;
+    background: #d06443;
+}
+
+.graph-view .skill-card {
+    position: relative;
+    border-radius: 50%;
+    min-height: 180px;
+    justify-content: center;
 }
 
 .skill-card-header,
@@ -139,6 +494,24 @@
     margin: 0;
     color: #173f3a;
     font-size: 21px;
+}
+
+.skill-focus-button {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.skill-focus-button small {
+    margin-top: 4px;
+    color: #61736c;
+    font-size: 11px;
 }
 
 .skill-index {
@@ -166,6 +539,22 @@
 .status-control {
     color: #61736c;
     font-size: 13px;
+}
+
+.dependency-control {
+    display: grid;
+    gap: 4px;
+    border: 0;
+    margin: 0;
+    padding: 0;
+    color: #61736c;
+    font-size: 12px;
+}
+
+.dependency-control legend {
+    margin-bottom: 4px;
+    color: #42665d;
+    font-weight: 700;
 }
 
 .xp-control {
@@ -285,5 +674,9 @@
     .goal-panel {
         align-items: stretch;
         margin-bottom: 40px;
+    }
+
+    .view-switcher {
+        justify-content: flex-start;
     }
 }

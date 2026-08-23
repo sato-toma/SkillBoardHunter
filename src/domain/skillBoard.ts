@@ -1,6 +1,7 @@
 export type Skill = {
     id: string;
     name: string;
+    prerequisiteSkillIds?: string[];
     xp?: number;
     level?: SkillLevel;
     status?: SkillStatus;
@@ -26,6 +27,51 @@ export const emptySkillBoard = (): SkillBoard => ({
     version: 1,
     skills: [],
     goals: [],
+});
+
+export const sampleSkillBoard = (): SkillBoard => ({
+    version: 1,
+    goals: [
+        {
+            id: "goal-product",
+            title: "Ship a useful product",
+            vision: "Turn an idea into something people can use.",
+            requiredSkillIds: ["skill-ui", "skill-react", "skill-release"],
+        },
+    ],
+    skills: [
+        {
+            id: "skill-web",
+            name: "Web fundamentals",
+            xp: 85,
+            level: 5,
+            status: "mastered",
+        },
+        {
+            id: "skill-react",
+            name: "React",
+            prerequisiteSkillIds: ["skill-web"],
+            xp: 60,
+            level: 4,
+            status: "practicing",
+        },
+        {
+            id: "skill-ui",
+            name: "Product UI",
+            prerequisiteSkillIds: ["skill-react"],
+            xp: 35,
+            level: 2,
+            status: "learning",
+        },
+        {
+            id: "skill-release",
+            name: "Release practice",
+            prerequisiteSkillIds: ["skill-react"],
+            xp: 15,
+            level: 1,
+            status: "learning",
+        },
+    ],
 });
 
 export const normalizeSkillName = (value: string): string => value.trim();

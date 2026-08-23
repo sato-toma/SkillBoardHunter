@@ -135,8 +135,9 @@ The tree is the primary relationship model. The board is a progression view over
 
 ### Validation status
 
-- Prototype A, Git Tree: prepared and runnable at `/interaction-prototypes.html`.
-- Prototype B, Skill Board: prepared and runnable at `/interaction-prototypes.html`.
+- Prototype A, Git Tree: represented by the in-app `Tree` mode and selected-node detail view.
+- Prototype B, Skill Board: represented by the in-app `Board` mode and XP-based unlock flow.
+- The standalone prototype page was removed after both interaction models were integrated into the product.
 - User feedback: the Git Tree relationship experience is preferred, while the Skill Board lock and unlock progression is also preferred.
 - Next validation: implement the hybrid interaction in the main app and verify node selection, detail inspection, prerequisite editing, XP changes, and Goal unlocking as one complete flow.
 
