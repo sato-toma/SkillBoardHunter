@@ -94,6 +94,8 @@ Goalを先に置き、その達成過程として必要なSkillとEvidenceが積
 - Skillの状態ラベルは `未経験`、`学習中`、`実践中`、`熟練` の固定値とする。自由タグと他ユーザーからの評価値は将来計画に残す。
 - 今回の縦切りではGoalの表示、Skillの追加、経験値・レベル・状態ラベルの編集を対象とし、Evidence、親子編集、Importは後続とする。
 - 既存MVP-0の保存データを読めるよう、新しいSkill属性は任意フィールドとして追加する。
+- Skillの作成は `Skills` 画面に集約し、`Map` はSkillの配置・関係編集・詳細確認に専念する。
+- 既存のQuestデータとRedux処理は保持するが、今回のナビゲーションではQuest画面を表示せず、同じ導線を `Skills` として扱う。
 
 ## Provisional Interaction Specification
 

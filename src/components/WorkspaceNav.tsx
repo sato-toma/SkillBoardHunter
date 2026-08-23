@@ -1,15 +1,15 @@
-type WorkspaceView = 'map' | 'quests' | 'goals';
+export type WorkspaceView = 'map' | 'skills' | 'goals';
 
 type WorkspaceNavProps = {
     activeView: WorkspaceView;
-    openQuestCount: number;
+    skillCount: number;
     onViewChange: (view: WorkspaceView) => void;
 };
 
-export function WorkspaceNav({ activeView, openQuestCount, onViewChange }: WorkspaceNavProps) {
+export function WorkspaceNav({ activeView, skillCount, onViewChange }: WorkspaceNavProps) {
     const items = [
         ['map', 'Map', 'Your territory'],
-        ['quests', 'Quests', `${openQuestCount} open`],
+        ['skills', 'Skills', `${skillCount} in library`],
         ['goals', 'Goals', 'What comes next'],
     ] as const;
 

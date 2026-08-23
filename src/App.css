@@ -611,6 +611,122 @@
     color: #52615d;
 }
 
+.skill-deck {
+    display: grid;
+    gap: 24px;
+    margin-bottom: 44px;
+    border-bottom: 1px solid #b8c8bd;
+    padding-bottom: 34px;
+}
+
+.skill-deck-intro,
+.skill-deck-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+}
+
+.skill-deck-intro h2,
+.skill-deck-header h3 {
+    margin: 0 0 8px;
+    color: #173f3a;
+}
+
+.skill-deck-intro h2 {
+    max-width: 620px;
+    font-size: clamp(30px, 6vw, 58px);
+    line-height: 0.98;
+}
+
+.skill-deck-intro p:not(.eyebrow),
+.skill-deck-header p,
+.skill-library-item p {
+    margin: 0;
+    color: #52615d;
+}
+
+.skill-deck-header {
+    align-items: end;
+}
+
+.skill-deck-header h3 {
+    font-size: 22px;
+}
+
+.create-skill-button,
+.skill-create-form button {
+    border: 1px solid #173f3a;
+    padding: 10px 14px;
+    background: #173f3a;
+    color: #fffdf8;
+    cursor: pointer;
+    font: inherit;
+}
+
+.skill-create-form {
+    display: grid;
+    gap: 8px;
+    border: 1px solid #9bb3a8;
+    padding: 18px;
+    background: #fffdf8;
+}
+
+.skill-create-form label {
+    color: #61736c;
+    font-size: 12px;
+}
+
+.skill-create-form > div {
+    display: flex;
+    gap: 8px;
+}
+
+.skill-create-form input {
+    min-width: 0;
+    width: 100%;
+    border: 1px solid #9bb3a8;
+    padding: 10px;
+    background: #fffdf8;
+    color: #173f3a;
+    font: inherit;
+}
+
+.skill-deck-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.skill-library-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid #9bb3a8;
+    padding: 18px;
+    background: #fffdf8;
+}
+
+.skill-library-item h3 {
+    margin: 0 0 8px;
+    color: #173f3a;
+    font-size: 20px;
+}
+
+.skill-library-item > span {
+    flex: 0 0 auto;
+    color: #c35c38;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.skill-empty {
+    border-left: 3px solid #d06443;
+    padding: 12px 16px;
+    color: #52615d;
+}
+
 @media (max-width: 640px) {
     .quest-deck-intro,
     .quest-deck-header,
@@ -628,6 +744,11 @@
 
     .level-up-mark {
         writing-mode: initial;
+    }
+
+    .skill-deck-intro,
+    .skill-deck-header {
+        display: grid;
     }
 }
 

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { isSkillUnlocked, type Skill } from '../domain/skillBoard';
 
 type SkillMapDetailProps = {
@@ -6,7 +5,6 @@ type SkillMapDetailProps = {
     skills: Skill[];
     onXpChange: (skill: Skill, xp: number) => void;
     onRemovePrerequisite: (skill: Skill, prerequisiteId: string) => void;
-    onQuickAdd: (name: string) => void;
 };
 
 export function SkillMapDetail({
@@ -14,10 +12,7 @@ export function SkillMapDetail({
     skills,
     onXpChange,
     onRemovePrerequisite,
-    onQuickAdd,
 }: SkillMapDetailProps) {
-    const [newSkillName, setNewSkillName] = useState('');
-
     if (!selectedSkill) {
         return (
             <aside className="skill-map-detail empty">
@@ -30,13 +25,6 @@ export function SkillMapDetail({
     const prerequisites = (selectedSkill.prerequisiteSkillIds ?? [])
         .map((id) => skills.find((skill) => skill.id === id))
         .filter((skill): skill is Skill => Boolean(skill));
-
-    const handleQuickAdd = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!newSkillName.trim()) return;
-        onQuickAdd(newSkillName.trim());
-        setNewSkillName('');
-    };
 
     return (
         <aside className="skill-map-detail" aria-label="Selected Skill">
@@ -77,18 +65,6 @@ export function SkillMapDetail({
                     ))}
                 </ul>
             </div>
-            <form className="skill-map-quick-add" onSubmit={handleQuickAdd}>
-                <label htmlFor="quick-add-name">Add a Skill next to this one</label>
-                <div>
-                    <input
-                        id="quick-add-name"
-                        value={newSkillName}
-                        onChange={(event) => setNewSkillName(event.target.value)}
-                        placeholder="Skill name"
-                    />
-                    <button type="submit">Add</button>
-                </div>
-            </form>
         </aside>
     );
 }
