@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { isSkillUnlocked, type Skill } from "../domain/skillBoard";
+import { useState } from 'react';
+import { isSkillUnlocked, type Skill } from '../domain/skillBoard';
 
 type SkillMapDetailProps = {
     selectedSkill: Skill | undefined;
@@ -16,7 +16,7 @@ export function SkillMapDetail({
     onRemovePrerequisite,
     onQuickAdd,
 }: SkillMapDetailProps) {
-    const [newSkillName, setNewSkillName] = useState("");
+    const [newSkillName, setNewSkillName] = useState('');
 
     if (!selectedSkill) {
         return (
@@ -35,19 +35,15 @@ export function SkillMapDetail({
         event.preventDefault();
         if (!newSkillName.trim()) return;
         onQuickAdd(newSkillName.trim());
-        setNewSkillName("");
+        setNewSkillName('');
     };
 
     return (
         <aside className="skill-map-detail" aria-label="Selected Skill">
             <div className="skill-map-detail-heading">
                 <h3>{selectedSkill.name}</h3>
-                <span
-                    className={
-                        unlocked ? "state-badge unlocked" : "state-badge locked"
-                    }
-                >
-                    {unlocked ? "UNLOCKED" : "LOCKED"}
+                <span className={unlocked ? 'state-badge unlocked' : 'state-badge locked'}>
+                    {unlocked ? 'UNLOCKED' : 'LOCKED'}
                 </span>
             </div>
             <label className="skill-map-xp">
@@ -57,18 +53,14 @@ export function SkillMapDetail({
                     min="0"
                     max="100"
                     value={selectedSkill.xp ?? 0}
-                    onChange={(event) =>
-                        onXpChange(selectedSkill, Number(event.target.value))
-                    }
+                    onChange={(event) => onXpChange(selectedSkill, Number(event.target.value))}
                     aria-label={`${selectedSkill.name} XP`}
                 />
             </label>
             <div className="skill-map-prereqs">
                 <span className="skill-map-label">Prerequisites</span>
                 {prerequisites.length === 0 && (
-                    <p className="skill-map-empty-note">
-                        None yet. Connect it on the map.
-                    </p>
+                    <p className="skill-map-empty-note">None yet. Connect it on the map.</p>
                 )}
                 <ul>
                     {prerequisites.map((prerequisite) => (
@@ -77,12 +69,7 @@ export function SkillMapDetail({
                             <button
                                 type="button"
                                 aria-label={`Remove ${prerequisite.name} as a prerequisite`}
-                                onClick={() =>
-                                    onRemovePrerequisite(
-                                        selectedSkill,
-                                        prerequisite.id,
-                                    )
-                                }
+                                onClick={() => onRemovePrerequisite(selectedSkill, prerequisite.id)}
                             >
                                 ×
                             </button>
@@ -91,16 +78,12 @@ export function SkillMapDetail({
                 </ul>
             </div>
             <form className="skill-map-quick-add" onSubmit={handleQuickAdd}>
-                <label htmlFor="quick-add-name">
-                    Add a Skill next to this one
-                </label>
+                <label htmlFor="quick-add-name">Add a Skill next to this one</label>
                 <div>
                     <input
                         id="quick-add-name"
                         value={newSkillName}
-                        onChange={(event) =>
-                            setNewSkillName(event.target.value)
-                        }
+                        onChange={(event) => setNewSkillName(event.target.value)}
                         placeholder="Skill name"
                     />
                     <button type="submit">Add</button>

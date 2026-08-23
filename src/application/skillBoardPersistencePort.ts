@@ -1,11 +1,11 @@
-import type { SkillBoard } from "../domain/skillBoard";
+import type { SkillBoard } from '../domain/skillBoard';
 
 export type PersistenceErrorKind =
-    | "unavailable"
-    | "read-failed"
-    | "write-failed"
-    | "delete-failed"
-    | "invalid-data";
+    | 'unavailable'
+    | 'read-failed'
+    | 'write-failed'
+    | 'delete-failed'
+    | 'invalid-data';
 
 export type PersistenceError = {
     kind: PersistenceErrorKind;

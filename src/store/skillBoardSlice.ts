@@ -1,4 +1,4 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import {
     applyQuestCompletion,
     type Evidence,
@@ -8,7 +8,7 @@ import {
     type Skill,
     type SkillBoard,
     type SkillStatus,
-} from "../domain/skillBoard";
+} from '../domain/skillBoard';
 
 export type SkillBoardState = {
     board: SkillBoard;
@@ -31,7 +31,7 @@ const initialState: SkillBoardState = {
 };
 
 const skillBoardSlice = createSlice({
-    name: "skillBoard",
+    name: 'skillBoard',
     initialState,
     reducers: {
         appStarted: () => undefined,
@@ -44,10 +44,7 @@ const skillBoardSlice = createSlice({
                 layoutY?: number;
             }>,
         ) => undefined,
-        removeSkillRequested: (
-            _state,
-            _action: PayloadAction<{ id: string }>,
-        ) => undefined,
+        removeSkillRequested: (_state, _action: PayloadAction<{ id: string }>) => undefined,
         updateSkillRequested: (
             _state,
             _action: PayloadAction<{
@@ -81,8 +78,7 @@ const skillBoardSlice = createSlice({
                 requiredSkillIds: string[];
             }>,
         ) => undefined,
-        removeGoalRequested: (_state, _action: PayloadAction<{ id: string }>) =>
-            undefined,
+        removeGoalRequested: (_state, _action: PayloadAction<{ id: string }>) => undefined,
         goalAdded: (state, action: PayloadAction<Goal>) => {
             state.board.goals = [...(state.board.goals ?? []), action.payload];
             state.errorMessage = null;
@@ -124,15 +120,12 @@ const skillBoardSlice = createSlice({
             state.quests.push(action.payload);
             state.errorMessage = null;
         },
-        questCompleted: (
-            state,
-            action: PayloadAction<{ questId: string; evidence: Evidence }>,
-        ) => {
+        questCompleted: (state, action: PayloadAction<{ questId: string; evidence: Evidence }>) => {
             const quest = (state.quests ?? []).find(
                 (candidate) => candidate.id === action.payload.questId,
             );
             if (!quest) {
-                state.errorMessage = "Quest was not found.";
+                state.errorMessage = 'Quest was not found.';
                 return;
             }
             const completion = applyQuestCompletion(
@@ -142,7 +135,7 @@ const skillBoardSlice = createSlice({
             );
             if (!completion) {
                 state.errorMessage =
-                    "Add evidence for a related Skill before completing this Quest.";
+                    'Add evidence for a related Skill before completing this Quest.';
                 return;
             }
             state.quests = (state.quests ?? []).map((candidate) =>
@@ -157,11 +150,7 @@ const skillBoardSlice = createSlice({
                       skillName: levelUp.skill.name,
                       capability: levelUp.capability.description,
                       nextSkills: state.board.skills
-                          .filter((skill) =>
-                              skill.prerequisiteSkillIds?.includes(
-                                  levelUp.skill.id,
-                              ),
-                          )
+                          .filter((skill) => skill.prerequisiteSkillIds?.includes(levelUp.skill.id))
                           .map((skill) => skill.name),
                   }
                 : null;
@@ -170,10 +159,7 @@ const skillBoardSlice = createSlice({
         clearLevelUp: (state) => {
             state.lastLevelUp = null;
         },
-        persistenceFailed: (
-            state,
-            action: PayloadAction<{ message: string }>,
-        ) => {
+        persistenceFailed: (state, action: PayloadAction<{ message: string }>) => {
             state.errorMessage = action.payload.message;
         },
     },

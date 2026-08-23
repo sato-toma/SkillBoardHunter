@@ -10,12 +10,12 @@ export type Skill = {
 };
 
 export type SkillLevel = 1 | 2 | 3 | 4 | 5;
-export type SkillStatus = "new" | "learning" | "practicing" | "mastered";
+export type SkillStatus = 'new' | 'learning' | 'practicing' | 'mastered';
 
-export type QuestDifficulty = "easy" | "medium" | "hard";
-export type QuestStatus = "open" | "completed";
-export type EvidenceSource = "manual" | "github" | "other";
-export type EvidenceConfidence = "low" | "medium" | "high";
+export type QuestDifficulty = 'easy' | 'medium' | 'hard';
+export type QuestStatus = 'open' | 'completed';
+export type EvidenceSource = 'manual' | 'github' | 'other';
+export type EvidenceConfidence = 'low' | 'medium' | 'high';
 
 export type Quest = {
     id: string;
@@ -73,51 +73,50 @@ export const sampleSkillBoard = (): SkillBoard => ({
     version: 1,
     goals: [
         {
-            id: "goal-product",
-            title: "Ship a useful product",
-            vision: "Turn an idea into something people can use.",
-            requiredSkillIds: ["skill-ui", "skill-react", "skill-release"],
+            id: 'goal-product',
+            title: 'Ship a useful product',
+            vision: 'Turn an idea into something people can use.',
+            requiredSkillIds: ['skill-ui', 'skill-react', 'skill-release'],
         },
     ],
     skills: [
         {
-            id: "skill-web",
-            name: "Web fundamentals",
+            id: 'skill-web',
+            name: 'Web fundamentals',
             xp: 85,
             level: 5,
-            status: "mastered",
+            status: 'mastered',
         },
         {
-            id: "skill-react",
-            name: "React",
-            prerequisiteSkillIds: ["skill-web"],
+            id: 'skill-react',
+            name: 'React',
+            prerequisiteSkillIds: ['skill-web'],
             xp: 60,
             level: 4,
-            status: "practicing",
+            status: 'practicing',
         },
         {
-            id: "skill-ui",
-            name: "Product UI",
-            prerequisiteSkillIds: ["skill-react"],
+            id: 'skill-ui',
+            name: 'Product UI',
+            prerequisiteSkillIds: ['skill-react'],
             xp: 35,
             level: 2,
-            status: "learning",
+            status: 'learning',
         },
         {
-            id: "skill-release",
-            name: "Release practice",
-            prerequisiteSkillIds: ["skill-react"],
+            id: 'skill-release',
+            name: 'Release practice',
+            prerequisiteSkillIds: ['skill-react'],
             xp: 15,
             level: 1,
-            status: "learning",
+            status: 'learning',
         },
     ],
 });
 
 export const normalizeSkillName = (value: string): string => value.trim();
 
-export const normalizeXp = (value: number): number =>
-    Math.min(100, Math.max(0, Math.round(value)));
+export const normalizeXp = (value: number): number => Math.min(100, Math.max(0, Math.round(value)));
 
 export const levelFromXp = (xp: number): SkillLevel => {
     const normalizedXp = normalizeXp(xp);
@@ -129,19 +128,13 @@ export const levelFromXp = (xp: number): SkillLevel => {
     return 1;
 };
 
-export const capabilityForLevel = (
-    skillId: string,
-    level: SkillLevel,
-): Capability => {
+export const capabilityForLevel = (skillId: string, level: SkillLevel): Capability => {
     const capabilities: Record<SkillLevel, [string, string]> = {
-        1: ["See the shape", "Understand the basic shape of this skill."],
-        2: ["Use with guidance", "Use this skill with a guided example."],
-        3: ["Apply in reality", "Apply this skill to a real task."],
-        4: [
-            "Improve the result",
-            "Explain trade-offs and improve an existing result.",
-        ],
-        5: ["Help someone else", "Help another person use this skill."],
+        1: ['See the shape', 'Understand the basic shape of this skill.'],
+        2: ['Use with guidance', 'Use this skill with a guided example.'],
+        3: ['Apply in reality', 'Apply this skill to a real task.'],
+        4: ['Improve the result', 'Explain trade-offs and improve an existing result.'],
+        5: ['Help someone else', 'Help another person use this skill.'],
     };
     const [title, description] = capabilities[level];
     return {
@@ -166,7 +159,7 @@ export const applyQuestCompletion = (
     skills: Skill[],
 ): QuestCompletion | null => {
     if (
-        quest.status === "completed" ||
+        quest.status === 'completed' ||
         !quest.title.trim() ||
         !evidence.description.trim() ||
         !evidence.date ||
@@ -192,22 +185,19 @@ export const applyQuestCompletion = (
             ...skill,
             xp,
             level: levelFromXp(xp),
-            status: xp >= 80 ? "mastered" : "practicing",
+            status: xp >= 80 ? 'mastered' : 'practicing',
         };
         if ((updatedSkill.level ?? 1) > previousLevel) {
             levelUps.push({
                 skill: updatedSkill,
-                capability: capabilityForLevel(
-                    skill.id,
-                    updatedSkill.level ?? 1,
-                ),
+                capability: capabilityForLevel(skill.id, updatedSkill.level ?? 1),
             });
         }
         return updatedSkill;
     });
 
     return {
-        quest: { ...quest, status: "completed", completedAt: evidence.date },
+        quest: { ...quest, status: 'completed', completedAt: evidence.date },
         evidence: { ...evidence, xp: awardedXp, questId: quest.id },
         skills: updatedSkills,
         levelUps,
@@ -217,40 +207,31 @@ export const applyQuestCompletion = (
 export const isSkillUnlocked = (skill: Skill, skills: Skill[]): boolean =>
     (skill.xp ?? 0) > 0 &&
     (skill.prerequisiteSkillIds ?? []).every(
-        (id) =>
-            (skills.find((candidate) => candidate.id === id)?.xp ?? 0) >= 60,
+        (id) => (skills.find((candidate) => candidate.id === id)?.xp ?? 0) >= 60,
     );
 
 const neighborIds = (skill: Skill, skills: Skill[]): string[] => [
     ...(skill.prerequisiteSkillIds ?? []),
     ...skills
-        .filter((candidate) =>
-            candidate.prerequisiteSkillIds?.includes(skill.id),
-        )
+        .filter((candidate) => candidate.prerequisiteSkillIds?.includes(skill.id))
         .map((candidate) => candidate.id),
 ];
 
-export type SkillVisibility = "hidden" | "discoverable" | "unlocked";
+export type SkillVisibility = 'hidden' | 'discoverable' | 'unlocked';
 
-export const skillVisibility = (
-    skill: Skill,
-    skills: Skill[],
-): SkillVisibility => {
-    if (isSkillUnlocked(skill, skills)) return "unlocked";
-    if ((skill.xp ?? 0) > 0) return "discoverable";
+export const skillVisibility = (skill: Skill, skills: Skill[]): SkillVisibility => {
+    if (isSkillUnlocked(skill, skills)) return 'unlocked';
+    if ((skill.xp ?? 0) > 0) return 'discoverable';
     const hasUnlockedNeighbor = neighborIds(skill, skills).some((id) => {
         const neighbor = skills.find((candidate) => candidate.id === id);
         return neighbor ? isSkillUnlocked(neighbor, skills) : false;
     });
-    return hasUnlockedNeighbor ? "discoverable" : "hidden";
+    return hasUnlockedNeighbor ? 'discoverable' : 'hidden';
 };
 
 export type SkillPosition = { x: number; y: number };
 
-export const fallbackSkillLayout = (
-    skill: Skill,
-    skills: Skill[],
-): SkillPosition => {
+export const fallbackSkillLayout = (skill: Skill, skills: Skill[]): SkillPosition => {
     const depthOf = (id: string, trail: Set<string> = new Set()): number => {
         if (trail.has(id)) return 0;
         const current = skills.find((candidate) => candidate.id === id);
@@ -260,9 +241,7 @@ export const fallbackSkillLayout = (
         return 1 + Math.max(...prerequisites.map((p) => depthOf(p, nextTrail)));
     };
     const depth = depthOf(skill.id);
-    const sameDepth = skills.filter(
-        (candidate) => depthOf(candidate.id) === depth,
-    );
+    const sameDepth = skills.filter((candidate) => depthOf(candidate.id) === depth);
     const indexAtDepth = Math.max(
         0,
         sameDepth.findIndex((candidate) => candidate.id === skill.id),
@@ -277,7 +256,7 @@ export const fallbackSkillLayout = (
 };
 
 export const isSkillBoard = (value: unknown): value is SkillBoard => {
-    if (!value || typeof value !== "object") {
+    if (!value || typeof value !== 'object') {
         return false;
     }
 
@@ -288,7 +267,7 @@ export const isSkillBoard = (value: unknown): value is SkillBoard => {
     }
 
     return board.skills.every((skill) => {
-        if (!skill || typeof skill !== "object") {
+        if (!skill || typeof skill !== 'object') {
             return false;
         }
 
@@ -300,17 +279,14 @@ export const isSkillBoard = (value: unknown): value is SkillBoard => {
             status?: unknown;
         };
         return (
-            typeof maybeSkill.id === "string" &&
-            typeof maybeSkill.name === "string" &&
+            typeof maybeSkill.id === 'string' &&
+            typeof maybeSkill.name === 'string' &&
             (maybeSkill.xp === undefined ||
-                (typeof maybeSkill.xp === "number" &&
-                    Number.isFinite(maybeSkill.xp))) &&
+                (typeof maybeSkill.xp === 'number' && Number.isFinite(maybeSkill.xp))) &&
             (maybeSkill.level === undefined ||
                 [1, 2, 3, 4, 5].includes(maybeSkill.level as number)) &&
             (maybeSkill.status === undefined ||
-                ["new", "learning", "practicing", "mastered"].includes(
-                    maybeSkill.status as string,
-                ))
+                ['new', 'learning', 'practicing', 'mastered'].includes(maybeSkill.status as string))
         );
     });
 };

@@ -2,15 +2,11 @@ import type {
     PersistenceError,
     Result,
     SkillBoardPersistencePort,
-} from "../application/skillBoardPersistencePort";
-import {
-    emptySkillBoard,
-    isSkillBoard,
-    type SkillBoard,
-} from "../domain/skillBoard";
+} from '../application/skillBoardPersistencePort';
+import { emptySkillBoard, isSkillBoard, type SkillBoard } from '../domain/skillBoard';
 
 const createError = (
-    kind: PersistenceError["kind"],
+    kind: PersistenceError['kind'],
     message: string,
     recoverable: boolean,
     cause?: unknown,
@@ -25,10 +21,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
     private readonly storageKey: string;
     private readonly storage: Storage | null;
 
-    constructor(
-        storageKey: string,
-        storage: Storage | null = globalThis.localStorage ?? null,
-    ) {
+    constructor(storageKey: string, storage: Storage | null = globalThis.localStorage ?? null) {
         this.storageKey = storageKey;
         this.storage = storage;
     }
@@ -37,11 +30,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         if (!this.storage) {
             return {
                 ok: false,
-                error: createError(
-                    "unavailable",
-                    "Storage is not available",
-                    true,
-                ),
+                error: createError('unavailable', 'Storage is not available', true),
             };
         }
 
@@ -57,11 +46,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
             if (!isSkillBoard(parsed)) {
                 return {
                     ok: false,
-                    error: createError(
-                        "invalid-data",
-                        "Stored data is invalid",
-                        true,
-                    ),
+                    error: createError('invalid-data', 'Stored data is invalid', true),
                 };
             }
 
@@ -69,12 +54,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         } catch (error) {
             return {
                 ok: false,
-                error: createError(
-                    "read-failed",
-                    "Failed to load board",
-                    true,
-                    error,
-                ),
+                error: createError('read-failed', 'Failed to load board', true, error),
             };
         }
     }
@@ -83,11 +63,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         if (!this.storage) {
             return {
                 ok: false,
-                error: createError(
-                    "unavailable",
-                    "Storage is not available",
-                    true,
-                ),
+                error: createError('unavailable', 'Storage is not available', true),
             };
         }
 
@@ -97,12 +73,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         } catch (error) {
             return {
                 ok: false,
-                error: createError(
-                    "write-failed",
-                    "Failed to save board",
-                    true,
-                    error,
-                ),
+                error: createError('write-failed', 'Failed to save board', true, error),
             };
         }
     }
@@ -111,11 +82,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         if (!this.storage) {
             return {
                 ok: false,
-                error: createError(
-                    "unavailable",
-                    "Storage is not available",
-                    true,
-                ),
+                error: createError('unavailable', 'Storage is not available', true),
             };
         }
 
@@ -125,12 +92,7 @@ export class WebStorageSkillBoardAdapter implements SkillBoardPersistencePort {
         } catch (error) {
             return {
                 ok: false,
-                error: createError(
-                    "delete-failed",
-                    "Failed to clear board",
-                    true,
-                    error,
-                ),
+                error: createError('delete-failed', 'Failed to clear board', true, error),
             };
         }
     }

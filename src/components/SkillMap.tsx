@@ -1,9 +1,5 @@
-import { useMemo, useRef, useState } from "react";
-import {
-    fallbackSkillLayout,
-    type Skill,
-    skillVisibility,
-} from "../domain/skillBoard";
+import { useMemo, useRef, useState } from 'react';
+import { fallbackSkillLayout, type Skill, skillVisibility } from '../domain/skillBoard';
 
 type SkillMapProps = {
     skills: Skill[];
@@ -48,7 +44,7 @@ export function SkillMap({
         [skills, dragPreview],
     );
 
-    const visible = positioned.filter((entry) => entry.visibility !== "hidden");
+    const visible = positioned.filter((entry) => entry.visibility !== 'hidden');
     const edges = visible.flatMap((entry) =>
         (entry.skill.prerequisiteSkillIds ?? [])
             .map((id) => visible.find((candidate) => candidate.skill.id === id))
@@ -61,9 +57,7 @@ export function SkillMap({
         if (!bounds) return { x: clientX, y: clientY };
         return {
             x: Math.round(((clientX - bounds.left) / bounds.width) * MAP_WIDTH),
-            y: Math.round(
-                ((clientY - bounds.top) / bounds.height) * MAP_HEIGHT,
-            ),
+            y: Math.round(((clientY - bounds.top) / bounds.height) * MAP_HEIGHT),
         };
     };
 
@@ -76,29 +70,23 @@ export function SkillMap({
 
             const handleMove = (moveEvent: PointerEvent) => {
                 moved = true;
-                const point = toLocalPoint(
-                    moveEvent.clientX,
-                    moveEvent.clientY,
-                );
+                const point = toLocalPoint(moveEvent.clientX, moveEvent.clientY);
                 setDragPreview({ id: skillId, ...point });
             };
             const handleUp = (upEvent: PointerEvent) => {
                 target.releasePointerCapture(event.pointerId);
-                window.removeEventListener("pointermove", handleMove);
-                window.removeEventListener("pointerup", handleUp);
+                window.removeEventListener('pointermove', handleMove);
+                window.removeEventListener('pointerup', handleUp);
                 if (moved) {
-                    const point = toLocalPoint(
-                        upEvent.clientX,
-                        upEvent.clientY,
-                    );
+                    const point = toLocalPoint(upEvent.clientX, upEvent.clientY);
                     onMove(skillId, point.x, point.y);
                 } else {
                     handleNodeClick(skillId);
                 }
                 setDragPreview(null);
             };
-            window.addEventListener("pointermove", handleMove);
-            window.addEventListener("pointerup", handleUp);
+            window.addEventListener('pointermove', handleMove);
+            window.addEventListener('pointerup', handleUp);
         };
 
     const handleNodeClick = (skillId: string) => {
@@ -119,8 +107,8 @@ export function SkillMap({
         <section className="skill-map" aria-label="Skill map">
             <div className="skill-map-hint">
                 {linkSourceId
-                    ? "Click another visible Skill to connect it, or click the same Skill again to cancel."
-                    : "Click a Skill to select it, then click a second Skill to connect them. Drag to reposition."}
+                    ? 'Click another visible Skill to connect it, or click the same Skill again to cancel.'
+                    : 'Click a Skill to select it, then click a second Skill to connect them. Drag to reposition.'}
             </div>
             <div className="skill-map-canvas" ref={containerRef}>
                 <svg
@@ -144,13 +132,13 @@ export function SkillMap({
                         type="button"
                         key={skill.id}
                         className={[
-                            "skill-map-node",
+                            'skill-map-node',
                             `visibility-${visibility}`,
-                            selectedSkillId === skill.id ? "selected" : "",
-                            linkSourceId === skill.id ? "linking" : "",
+                            selectedSkillId === skill.id ? 'selected' : '',
+                            linkSourceId === skill.id ? 'linking' : '',
                         ]
                             .filter(Boolean)
-                            .join(" ")}
+                            .join(' ')}
                         style={{
                             left: `${(x / MAP_WIDTH) * 100}%`,
                             top: `${(y / MAP_HEIGHT) * 100}%`,
@@ -158,13 +146,9 @@ export function SkillMap({
                         onPointerDown={handlePointerDown(skill.id)}
                         aria-pressed={selectedSkillId === skill.id}
                     >
-                        <span className="skill-map-node-name">
-                            {skill.name}
-                        </span>
-                        {visibility === "unlocked" && (
-                            <span className="skill-map-node-xp">
-                                {skill.xp ?? 0} XP
-                            </span>
+                        <span className="skill-map-node-name">{skill.name}</span>
+                        {visibility === 'unlocked' && (
+                            <span className="skill-map-node-xp">{skill.xp ?? 0} XP</span>
                         )}
                     </button>
                 ))}

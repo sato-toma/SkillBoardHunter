@@ -1,10 +1,5 @@
-import { type FormEvent, useState } from "react";
-import type {
-    Evidence,
-    Quest,
-    QuestDifficulty,
-    Skill,
-} from "../domain/skillBoard";
+import { type FormEvent, useState } from 'react';
+import type { Evidence, Quest, QuestDifficulty, Skill } from '../domain/skillBoard';
 
 type GrowthQuestDeckProps = {
     goal?: { id: string; title: string; vision?: string };
@@ -34,25 +29,19 @@ export function GrowthQuestDeck({
     onDismissLevelUp,
 }: GrowthQuestDeckProps) {
     const [showCreate, setShowCreate] = useState(false);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState("");
-    const [criteria, setCriteria] = useState("");
-    const [difficulty, setDifficulty] = useState<QuestDifficulty>("medium");
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [criteria, setCriteria] = useState('');
+    const [difficulty, setDifficulty] = useState<QuestDifficulty>('medium');
     const [expectedXp, setExpectedXp] = useState(20);
-    const [skillId, setSkillId] = useState(skills[0]?.id ?? "");
+    const [skillId, setSkillId] = useState(skills[0]?.id ?? '');
     const [activeQuestId, setActiveQuestId] = useState<string | null>(null);
-    const [proof, setProof] = useState("");
+    const [proof, setProof] = useState('');
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
     const createQuest = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        if (
-            !title.trim() ||
-            !description.trim() ||
-            !criteria.trim() ||
-            !skillId
-        )
-            return;
+        if (!title.trim() || !description.trim() || !criteria.trim() || !skillId) return;
         onAddQuest({
             id: newId(),
             goalId: goal?.id,
@@ -63,11 +52,11 @@ export function GrowthQuestDeck({
             expectedXp,
             relatedSkillIds: [skillId],
             completionCriteria: criteria.trim(),
-            status: "open",
+            status: 'open',
         });
-        setTitle("");
-        setDescription("");
-        setCriteria("");
+        setTitle('');
+        setDescription('');
+        setCriteria('');
         setShowCreate(false);
     };
 
@@ -76,32 +65,27 @@ export function GrowthQuestDeck({
         if (!proof.trim() || !date) return;
         onCompleteQuest(quest.id, {
             id: newId(),
-            source: "manual",
+            source: 'manual',
             date,
             description: proof.trim(),
-            relatedSkillId: quest.relatedSkillIds[0] ?? "",
+            relatedSkillId: quest.relatedSkillIds[0] ?? '',
             xp: quest.expectedXp,
-            confidence: "medium",
+            confidence: 'medium',
         });
-        setProof("");
+        setProof('');
         setActiveQuestId(null);
     };
 
-    const openQuests = quests.filter((quest) => quest.status === "open");
-    const completedQuests = quests.filter(
-        (quest) => quest.status === "completed",
-    );
+    const openQuests = quests.filter((quest) => quest.status === 'open');
+    const completedQuests = quests.filter((quest) => quest.status === 'completed');
 
     return (
         <section className="quest-deck" aria-label="Quest progression">
             <div className="quest-deck-intro">
                 <div>
                     <p className="eyebrow">THE NEXT MOVE</p>
-                    <h2>{goal?.title ?? "Choose a direction"}</h2>
-                    <p>
-                        {goal?.vision ??
-                            "Your map begins with one meaningful move."}
-                    </p>
+                    <h2>{goal?.title ?? 'Choose a direction'}</h2>
+                    <p>{goal?.vision ?? 'Your map begins with one meaningful move.'}</p>
                 </div>
                 <div className="quest-deck-stats">
                     <span>{evidence.length} evidence</span>
@@ -117,16 +101,11 @@ export function GrowthQuestDeck({
                         <p>{levelUp.capability}</p>
                         {levelUp.nextSkills.length > 0 && (
                             <p className="next-paths">
-                                The map now points toward{" "}
-                                {levelUp.nextSkills.join(", ")}.
+                                The map now points toward {levelUp.nextSkills.join(', ')}.
                             </p>
                         )}
                     </div>
-                    <button
-                        type="button"
-                        onClick={onDismissLevelUp}
-                        aria-label="Dismiss level up"
-                    >
+                    <button type="button" onClick={onDismissLevelUp} aria-label="Dismiss level up">
                         Continue
                     </button>
                 </aside>
@@ -141,7 +120,7 @@ export function GrowthQuestDeck({
                     type="button"
                     onClick={() => setShowCreate((visible) => !visible)}
                 >
-                    {showCreate ? "Close" : "New Quest"}
+                    {showCreate ? 'Close' : 'New Quest'}
                 </button>
             </div>
             {showCreate && (
@@ -171,9 +150,7 @@ export function GrowthQuestDeck({
                             Skill
                             <select
                                 value={skillId}
-                                onChange={(event) =>
-                                    setSkillId(event.target.value)
-                                }
+                                onChange={(event) => setSkillId(event.target.value)}
                             >
                                 {skills.map((skill) => (
                                     <option key={skill.id} value={skill.id}>
@@ -187,9 +164,7 @@ export function GrowthQuestDeck({
                             <select
                                 value={difficulty}
                                 onChange={(event) =>
-                                    setDifficulty(
-                                        event.target.value as QuestDifficulty,
-                                    )
+                                    setDifficulty(event.target.value as QuestDifficulty)
                                 }
                             >
                                 <option value="easy">Easy</option>
@@ -204,9 +179,7 @@ export function GrowthQuestDeck({
                                 min="1"
                                 max="100"
                                 value={expectedXp}
-                                onChange={(event) =>
-                                    setExpectedXp(Number(event.target.value))
-                                }
+                                onChange={(event) => setExpectedXp(Number(event.target.value))}
                             />
                         </label>
                     </div>
@@ -216,8 +189,7 @@ export function GrowthQuestDeck({
             <div className="quest-cards">
                 {openQuests.length === 0 && (
                     <p className="quest-empty">
-                        No open Quests yet. Create one that changes something
-                        outside this screen.
+                        No open Quests yet. Create one that changes something outside this screen.
                     </p>
                 )}
                 {openQuests.map((quest) => {
@@ -233,23 +205,19 @@ export function GrowthQuestDeck({
                             <h4>{quest.title}</h4>
                             <p>{quest.description}</p>
                             <div className="quest-card-footer">
-                                <span>{skill?.name ?? "Unknown Skill"}</span>
+                                <span>{skill?.name ?? 'Unknown Skill'}</span>
                                 <span>{quest.difficulty}</span>
                                 <span>{quest.completionCriteria}</span>
                             </div>
                             {activeQuestId === quest.id ? (
                                 <form
                                     className="proof-form"
-                                    onSubmit={(event) =>
-                                        completeQuest(event, quest)
-                                    }
+                                    onSubmit={(event) => completeQuest(event, quest)}
                                 >
                                     <textarea
                                         aria-label="Evidence"
                                         value={proof}
-                                        onChange={(event) =>
-                                            setProof(event.target.value)
-                                        }
+                                        onChange={(event) => setProof(event.target.value)}
                                         placeholder="What did you actually make, test, publish, or share?"
                                         rows={3}
                                     />
@@ -258,14 +226,10 @@ export function GrowthQuestDeck({
                                         <input
                                             type="date"
                                             value={date}
-                                            onChange={(event) =>
-                                                setDate(event.target.value)
-                                            }
+                                            onChange={(event) => setDate(event.target.value)}
                                         />
                                     </label>
-                                    <button type="submit">
-                                        Claim Progress
-                                    </button>
+                                    <button type="submit">Claim Progress</button>
                                 </form>
                             ) : (
                                 <button

@@ -1,6 +1,6 @@
-import type { SagaIterator } from "redux-saga";
-import { call, put, select, takeEvery } from "redux-saga/effects";
-import type { SkillBoardPersistencePort } from "../application/skillBoardPersistencePort";
+import type { SagaIterator } from 'redux-saga';
+import { call, put, select, takeEvery } from 'redux-saga/effects';
+import type { SkillBoardPersistencePort } from '../application/skillBoardPersistencePort';
 import {
     levelFromXp,
     normalizeSkillName,
@@ -9,7 +9,7 @@ import {
     type SkillBoard,
     type SkillStatus,
     sampleSkillBoard,
-} from "../domain/skillBoard";
+} from '../domain/skillBoard';
 import {
     addSkillRequested,
     appStarted,
@@ -29,20 +29,16 @@ import {
     updateSkillDependenciesRequested,
     updateSkillPositionRequested,
     updateSkillRequested,
-} from "./skillBoardSlice";
+} from './skillBoardSlice';
 
 type SkillBoardRootState = {
     skillBoard: SkillBoardState;
 };
 
-const STORAGE_FAILURE_MESSAGE =
-    "保存処理に失敗しました。しばらくしてから再試行してください。";
+const STORAGE_FAILURE_MESSAGE = '保存処理に失敗しました。しばらくしてから再試行してください。';
 
 const createSkillId = (): string => {
-    if (
-        typeof crypto !== "undefined" &&
-        typeof crypto.randomUUID === "function"
-    ) {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
     }
 
@@ -50,18 +46,20 @@ const createSkillId = (): string => {
 };
 
 function* handleAppStarted(port: SkillBoardPersistencePort): SagaIterator {
-    const result: Awaited<ReturnType<SkillBoardPersistencePort["load"]>> =
-        yield call([port, port.load]);
+    const result: Awaited<ReturnType<SkillBoardPersistencePort['load']>> = yield call([
+        port,
+        port.load,
+    ]);
 
     if (result.ok) {
         yield put(boardLoaded(result.value));
         return;
     }
 
-    if (result.error.kind === "invalid-data") {
+    if (result.error.kind === 'invalid-data') {
         yield put(
             persistenceFailed({
-                message: "保存データが破損しているため初期化しました。",
+                message: '保存データが破損しているため初期化しました。',
             }),
         );
         yield put(boardLoaded({ version: 1, skills: [] }));
@@ -78,9 +76,7 @@ function* handleAddSkillRequested(
     const normalized = normalizeSkillName(action.payload.name);
 
     if (!normalized) {
-        yield put(
-            persistenceFailed({ message: "Skill名を入力してください。" }),
-        );
+        yield put(persistenceFailed({ message: 'Skill名を入力してください。' }));
         return;
     }
 
@@ -93,7 +89,7 @@ function* handleAddSkillRequested(
         prerequisiteSkillIds: action.payload.prerequisiteSkillIds,
         xp: 0,
         level: 1,
-        status: "new",
+        status: 'new',
         layoutX: action.payload.layoutX,
         layoutY: action.payload.layoutY,
     };
@@ -102,8 +98,10 @@ function* handleAddSkillRequested(
         skills: [...currentBoard.skills, newSkill],
     };
 
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -120,9 +118,7 @@ function* handleUpdateSkillRequested(
     const currentBoard: SkillBoard = yield select(
         (state: SkillBoardRootState) => state.skillBoard.board,
     );
-    const currentSkill = currentBoard.skills.find(
-        (skill) => skill.id === action.payload.id,
-    );
+    const currentSkill = currentBoard.skills.find((skill) => skill.id === action.payload.id);
 
     if (!currentSkill) return;
 
@@ -139,8 +135,10 @@ function* handleUpdateSkillRequested(
             skill.id === updatedSkill.id ? updatedSkill : skill,
         ),
     };
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -155,9 +153,7 @@ function* handleUpdateSkillDependenciesRequested(
     action: ReturnType<typeof updateSkillDependenciesRequested>,
 ): SagaIterator {
     if (action.payload.prerequisiteSkillIds.includes(action.payload.id)) {
-        yield put(
-            persistenceFailed({ message: "Skill cannot depend on itself." }),
-        );
+        yield put(persistenceFailed({ message: 'Skill cannot depend on itself.' }));
         return;
     }
 
@@ -175,17 +171,17 @@ function* handleUpdateSkillDependenciesRequested(
                 : skill,
         ),
     };
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
         return;
     }
 
-    const updatedSkill = nextBoard.skills.find(
-        (skill) => skill.id === action.payload.id,
-    );
+    const updatedSkill = nextBoard.skills.find((skill) => skill.id === action.payload.id);
     if (updatedSkill) yield put(skillUpdated(updatedSkill));
 }
 
@@ -208,26 +204,26 @@ function* handleUpdateSkillPositionRequested(
                 : skill,
         ),
     };
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
         return;
     }
 
-    const updatedSkill = nextBoard.skills.find(
-        (skill) => skill.id === action.payload.id,
-    );
+    const updatedSkill = nextBoard.skills.find((skill) => skill.id === action.payload.id);
     if (updatedSkill) yield put(skillUpdated(updatedSkill));
 }
 
-function* handleLoadSampleRequested(
-    port: SkillBoardPersistencePort,
-): SagaIterator {
+function* handleLoadSampleRequested(port: SkillBoardPersistencePort): SagaIterator {
     const board = sampleSkillBoard();
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], board);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        board,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -244,7 +240,7 @@ function* handleUpdateGoalRequested(
     const title = action.payload.title.trim();
 
     if (!title) {
-        yield put(persistenceFailed({ message: "Goal名を入力してください。" }));
+        yield put(persistenceFailed({ message: 'Goal名を入力してください。' }));
         return;
     }
 
@@ -261,16 +257,16 @@ function* handleUpdateGoalRequested(
     };
     const nextBoard: SkillBoard = {
         ...currentBoard,
-        goals: (currentBoard.goals ?? []).some(
-            (currentGoal) => currentGoal.id === goal.id,
-        )
+        goals: (currentBoard.goals ?? []).some((currentGoal) => currentGoal.id === goal.id)
             ? currentBoard.goals?.map((currentGoal) =>
                   currentGoal.id === goal.id ? goal : currentGoal,
               )
             : [...(currentBoard.goals ?? []), goal],
     };
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -293,12 +289,12 @@ function* handleRemoveGoalRequested(
     );
     const nextBoard: SkillBoard = {
         ...currentBoard,
-        goals: currentBoard.goals?.filter(
-            (goal) => goal.id !== action.payload.id,
-        ),
+        goals: currentBoard.goals?.filter((goal) => goal.id !== action.payload.id),
     };
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -317,9 +313,7 @@ function* handleRemoveSkillRequested(
     );
     const nextBoard: SkillBoard = {
         ...currentBoard,
-        skills: currentBoard.skills.filter(
-            (skill) => skill.id !== action.payload.id,
-        ),
+        skills: currentBoard.skills.filter((skill) => skill.id !== action.payload.id),
         goals: currentBoard.goals?.map((goal) => ({
             ...goal,
             requiredSkillIds: goal.requiredSkillIds?.filter(
@@ -328,8 +322,10 @@ function* handleRemoveSkillRequested(
         })),
     };
 
-    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort["save"]>> =
-        yield call([port, port.save], nextBoard);
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
 
     if (!saveResult.ok) {
         yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
@@ -339,21 +335,11 @@ function* handleRemoveSkillRequested(
     yield put(skillRemoved({ id: action.payload.id }));
 }
 
-export function* createSkillBoardSaga(
-    port: SkillBoardPersistencePort,
-): SagaIterator {
+export function* createSkillBoardSaga(port: SkillBoardPersistencePort): SagaIterator {
     yield takeEvery(appStarted.type, handleAppStarted, port);
     yield takeEvery(addSkillRequested.type, handleAddSkillRequested, port);
-    yield takeEvery(
-        removeSkillRequested.type,
-        handleRemoveSkillRequested,
-        port,
-    );
-    yield takeEvery(
-        updateSkillRequested.type,
-        handleUpdateSkillRequested,
-        port,
-    );
+    yield takeEvery(removeSkillRequested.type, handleRemoveSkillRequested, port);
+    yield takeEvery(updateSkillRequested.type, handleUpdateSkillRequested, port);
     yield takeEvery(updateGoalRequested.type, handleUpdateGoalRequested, port);
     yield takeEvery(removeGoalRequested.type, handleRemoveGoalRequested, port);
     yield takeEvery(
@@ -361,10 +347,6 @@ export function* createSkillBoardSaga(
         handleUpdateSkillDependenciesRequested,
         port,
     );
-    yield takeEvery(
-        updateSkillPositionRequested.type,
-        handleUpdateSkillPositionRequested,
-        port,
-    );
+    yield takeEvery(updateSkillPositionRequested.type, handleUpdateSkillPositionRequested, port);
     yield takeEvery(loadSampleRequested.type, handleLoadSampleRequested, port);
 }
