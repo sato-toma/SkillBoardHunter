@@ -10,7 +10,7 @@ Draft
 | --- | --- | --- |
 | Plan | Complete | User request 2026-08-21 |
 | Change Scope | Complete | This document |
-| Detailed Design | Complete | Goal起点2D投影、経験値・レベル・状態ラベルの暫定仕様を確定 |
+| Detailed Design | Provisional | Interaction model is recorded for further user validation |
 | Implementation | Complete | Goal起点の表示＋Skillレベル縦切り |
 | Unit Test | In progress | Redux状態遷移テストを追加。実行は未確認 |
 | Functional Test | Not started |  |
@@ -94,6 +94,53 @@ Goalを先に置き、その達成過程として必要なSkillとEvidenceが積
 - Skillの状態ラベルは `未経験`、`学習中`、`実践中`、`熟練` の固定値とする。自由タグと他ユーザーからの評価値は将来計画に残す。
 - 今回の縦切りではGoalの表示、Skillの追加、経験値・レベル・状態ラベルの編集を対象とし、Evidence、親子編集、Importは後続とする。
 - 既存MVP-0の保存データを読めるよう、新しいSkill属性は任意フィールドとして追加する。
+
+## Provisional Interaction Specification
+
+This section records the current interaction direction. It is not a final product specification and must be validated through a runnable prototype before the next production implementation.
+
+### Selected direction
+
+Use a hybrid of two interaction models:
+
+- **Tree model**: show parent-child and prerequisite relationships as a navigable tree. Selecting a node opens its details, including prerequisites, dependents, attainment, and related Goals.
+- **Skill Board model**: use attainment earned by the user to satisfy prerequisites. A Skill remains locked until its prerequisites are satisfied; increasing its personal XP can unlock the next Skill or Goal.
+
+The tree is the primary relationship model. The board is a progression view over the same nodes and relationships, not a separate data model.
+
+### Core operation sequence
+
+1. Select a Skill node in the tree or board.
+2. Open the Skill detail view.
+3. Inspect its prerequisites, dependent Skills, related Goals, current XP, and lock state.
+4. Add or remove a prerequisite from the detail view.
+5. Increase the user's XP for the selected Skill.
+6. Recalculate dependent Skill and Goal lock states immediately.
+7. Select an unlocked node and repeat the process.
+
+### Interaction rules for the prototype
+
+- A node click selects the node and keeps the detail view open.
+- A blocked node explains which prerequisite is missing.
+- XP belongs to the current user and is the input for unlocking.
+- Relationship edits are explicit and reversible through add/remove controls.
+- Goal unlock state is derived from the user's XP on its required Skills.
+- The prototype should make dependent nodes and Goals visibly update after each XP or relationship change.
+
+### Rejected for now
+
+- A purely decorative graph where relationships cannot be inspected or edited.
+- Editing relationships directly through small controls embedded in every card.
+- Treating a Skill's general popularity or other users' evaluations as the user's personal attainment.
+
+### Validation status
+
+- Prototype A, Git Tree: prepared and runnable at `/interaction-prototypes.html`.
+- Prototype B, Skill Board: prepared and runnable at `/interaction-prototypes.html`.
+- User feedback: the Git Tree relationship experience is preferred, while the Skill Board lock and unlock progression is also preferred.
+- Next validation: implement the hybrid interaction in the main app and verify node selection, detail inspection, prerequisite editing, XP changes, and Goal unlocking as one complete flow.
+
+Until that validation is complete, this section remains provisional and may be revised without a data migration commitment.
 
 ## Open Questions
 
@@ -362,3 +409,17 @@ UI action
 - [ ] Functional Test: acceptance criteria verified
 - [ ] Run validation commands and record results
 - [ ] Record remaining technical issues
+
+## Interaction Validation Record
+
+### Interaction Validation: dependency and goal progression
+
+- Prototype A: Tree. Select a Skill, then add or remove prerequisite Skills from the detail panel. Change XP and observe dependent Skills.
+- Prototype B: Skill Board. Select a node, inspect blocked prerequisites, change attainment, and unlock the node when prerequisites are met.
+- User-selected model: Combine both models. Use the Git Tree operation model for relationships and the Skill Board operation model for XP-based unlocking.
+- Core action sequence: Select a node -> inspect its details -> edit prerequisites or XP -> see dependent and Goal unlock state update.
+- Feedback after each action: Show the selected node, prerequisite list, blocked/unlocked state, XP, level, and Goal progress.
+- Invalid or blocked action behavior: Prevent self-dependencies and keep a node locked while a prerequisite is below the unlock threshold.
+- Undo or recovery behavior: Keep changes local to the selected operation and allow the user to reverse them by removing a prerequisite or lowering XP.
+- Rejected alternatives: A purely decorative graph and inline-only checkbox editing were rejected because they do not make dependency impact easy to inspect.
+- Verification method: Component or functional test for select -> edit relationship -> change XP -> observe dependent and Goal state.

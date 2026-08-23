@@ -14,6 +14,7 @@
 - Complete the Plan, Change Scope, and Detailed Design phases before writing production code.
 - If a requirement, behavior, data shape, platform constraint, or acceptance condition is unclear, ask the user before implementing it.
 - Do not silently choose product behavior when multiple interpretations are plausible. Record the answer in the relevant design document.
+- Before implementing any user-facing interaction, validate the interaction model with a small runnable prototype. Show at least two plausible operation patterns, ask the user to try them, and record the selected model and rejected alternatives in the relevant design document. Do not implement a visual approximation before this confirmation.
 - State a falsifiable implementation hypothesis and a focused validation check before making a non-trivial change.
 
 ## Design and Testing

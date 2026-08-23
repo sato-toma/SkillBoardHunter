@@ -16,13 +16,14 @@ Use this workflow for the Plan, Change Scope, and Detailed Design phases. Do not
 3. Complete the Change Scope phase: identify affected files, modules, persisted data, platform differences, and risks.
 4. Extract confirmed requirements and list assumptions separately.
 5. Identify every question that can change user-visible behavior, persisted data, platform support, or acceptance criteria.
-6. Ask the user those questions before implementation. Do not fill in product decisions silently.
-7. Complete the Detailed Design phase using `docs/detailed-design-template.md`.
-8. Define acceptance criteria that can be checked from the user's perspective.
-9. Define module boundaries and data flow. Keep domain logic independent from browser and Capacitor APIs.
-10. Define separate Unit Test and Functional Test plans, including invalid input, empty state, persistence failure, and reload behavior when relevant.
-11. Record rejected alternatives and trade-offs. Create or update an ADR when the decision affects the architecture or technology stack.
-12. Record unresolved risks or environment constraints in `docs/technical-issues.md` with a next action and revisit condition.
+6. For unclear user interactions, prepare and validate at least two runnable operation prototypes before implementation. Ask the user to try them and record the selected operation model and rejected alternatives.
+7. Ask the user those questions before implementation. Do not fill in product decisions silently.
+8. Complete the Detailed Design phase using `docs/detailed-design-template.md`.
+9. Define acceptance criteria that can be checked from the user's perspective.
+10. Define module boundaries and data flow. Keep domain logic independent from browser and Capacitor APIs.
+11. Define separate Unit Test and Functional Test plans, including invalid input, empty state, persistence failure, and reload behavior when relevant.
+12. Record rejected alternatives and trade-offs. Create or update an ADR when the decision affects the architecture or technology stack.
+13. Record unresolved risks or environment constraints in `docs/technical-issues.md` with a next action and revisit condition.
 
 ## Required Stop Conditions
 
@@ -34,6 +35,7 @@ Pause and ask the user when any of these are unresolved:
 - An error, empty, loading, or recovery behavior is user-visible but unspecified.
 - A test cannot be written because the acceptance condition is not observable.
 - The user has not approved a phase boundary that changes scope, persisted data, or platform behavior.
+- The user has not tried or approved a prototype when the operation model is unclear.
 
 ## Completion Summary
 
