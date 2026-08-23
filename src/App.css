@@ -1,8 +1,66 @@
 .app-shell {
-    width: min(960px, 100%);
+    display: grid;
+    grid-template-columns: 172px minmax(0, 1fr);
+    column-gap: 32px;
+    width: min(1180px, 100%);
     margin: 0 auto;
     padding: 56px 28px 72px;
     box-sizing: border-box;
+}
+
+.workspace-nav {
+    position: sticky;
+    top: 28px;
+    align-self: start;
+    display: grid;
+    gap: 8px;
+    grid-row: 1 / span 4;
+}
+
+.workspace-brand {
+    display: grid;
+    gap: 2px;
+    margin-bottom: 28px;
+    color: #173f3a;
+    font-size: 20px;
+}
+
+.workspace-brand .eyebrow {
+    margin-bottom: 0;
+    font-size: 9px;
+}
+
+.workspace-nav-item {
+    display: grid;
+    gap: 4px;
+    border: 0;
+    border-left: 2px solid transparent;
+    padding: 12px 10px;
+    background: transparent;
+    color: #61736c;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.workspace-nav-item span {
+    color: #42665d;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.workspace-nav-item small {
+    font-size: 11px;
+}
+
+.workspace-nav-item:hover,
+.workspace-nav-item.active {
+    border-left-color: #d06443;
+    background: rgba(208, 100, 67, 0.08);
+}
+
+.workspace-nav-item.active span {
+    color: #173f3a;
 }
 
 .app-header {
@@ -801,6 +859,52 @@
     font-weight: 600;
 }
 
+.workspace-view {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 44px;
+}
+
+.workspace-view-heading {
+    border-bottom: 1px solid #b8c8bd;
+    padding-bottom: 22px;
+}
+
+.workspace-view-heading h2 {
+    max-width: 650px;
+    margin: 0 0 10px;
+    color: #173f3a;
+    font-size: clamp(28px, 5vw, 50px);
+    line-height: 1;
+}
+
+.workspace-view-heading p,
+.workspace-record p {
+    margin: 0;
+    color: #52615d;
+}
+
+.workspace-record {
+    display: grid;
+    gap: 10px;
+    border-left: 3px solid #d77a54;
+    padding: 16px 18px;
+    background: rgba(255, 253, 248, 0.62);
+}
+
+.workspace-record h3 {
+    margin: 0;
+    color: #173f3a;
+    font-size: 22px;
+}
+
+.workspace-record > strong,
+.workspace-record small {
+    color: #61736c;
+    font-size: 12px;
+}
+
+
 @media (max-width: 640px) {
     .skill-map-panel {
         grid-template-columns: 1fr;
@@ -813,7 +917,35 @@
     }
 
     .app-shell {
+        display: block;
         padding: 32px 18px 48px;
+    }
+
+    .workspace-nav {
+        position: static;
+        display: flex;
+        gap: 4px;
+        margin: -10px -18px 28px;
+        overflow-x: auto;
+        border-bottom: 1px solid #b8c8bd;
+        padding: 0 18px;
+    }
+
+    .workspace-brand {
+        display: none;
+    }
+
+    .workspace-nav-item {
+        flex: 0 0 auto;
+        border-left: 0;
+        border-bottom: 2px solid transparent;
+        padding: 10px 12px;
+    }
+
+    .workspace-nav-item:hover,
+    .workspace-nav-item.active {
+        border-bottom-color: #d06443;
+        border-left-color: transparent;
     }
 
     .app-header,
