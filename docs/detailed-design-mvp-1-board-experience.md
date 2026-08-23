@@ -10,9 +10,9 @@ Draft
 | --- | --- | --- |
 | Plan | Complete | User request 2026-08-21 |
 | Change Scope | Complete | This document |
-| Detailed Design | Provisional | Interaction model is recorded for further user validation |
-| Implementation | Complete | Goal起点の表示＋Skillレベル縦切り |
-| Unit Test | In progress | Redux状態遷移テストを追加。実行は未確認 |
+| Detailed Design | Provisional | Shared Node model and relationship interaction are recorded; prototype validation is pending |
+| Implementation | Partial | Previous Skill/Goal vertical slice is implemented; shared Node model is not implemented |
+| Unit Test | In progress | Existing Redux and domain tests pass; new Node tests are not started |
 | Functional Test | Not started |  |
 
 ## Related Documents
@@ -25,404 +25,267 @@ Draft
 
 ## Goal
 
-Skillを単なる一覧ではなく「ボード」として見せ、次の情報を一目で理解できる体験を作る。
-
-- 何を実現したいか（Goal / 目指す世界）
-- 何ができるか（Skill）
-- どの程度できるか（習熟レベル）
-- それを示す実績（Evidence）
-- Skill同士の親子関係（TRUNK/LEAF）
-- 他ユーザーのSkillを部分的に取り込み、自分のBoardへ統合できる
-
-Goalを先に置き、その達成過程として必要なSkillとEvidenceが積み上がる構造を可視化する。
+Represent the user's direction and capabilities as one connected board. `Skill` and `Goal` are views over the same Node graph rather than separate relationship systems.
 
 ## Scope
 
 ### In scope
 
-- ボード表示（カードまたはノードのレイアウト）
-- Goal/やりたいこと/目指す世界の表示
-- Skillごとの習熟レベル表示
-- Skillごとの実績表示
-- 親子関係を持つSkill構造の表示
-- GoalとSkillの関連表示（必要Skillの紐づけ）
-- 最小の追加/編集UI（ボード体験確認に必要な範囲）
-- 他ユーザーBoardからの部分取り込み（選択Import）
-- 取り込み時の同一Skill判定フロー（自動候補 + 手動確定）
+- Display all Nodes in one Map
+- Add Nodes from the Skills and Goals entry points
+- Display parent and child relationships
+- Open a Node edit page from the Map
+- Add and remove parents and children from the Node edit page
+- Select related Nodes through an Add parent/Add child dialog
+- Use a display-oriented Node category without making it a different Node type
+- Preserve existing Skill progression behavior where it remains compatible
 
 ### Out of scope
 
 - TOML Import/Export
-- 完全自動の曖昧同一判定（自然言語だけで100%同一判定する処理）
-- 複雑な経路探索アルゴリズム
-- 複数ユーザー共有
-- i18n本実装
-- Goalまでの最短経路計算（MVP-4対象）
+- Automatic semantic classification of Nodes
+- Automatic calculation of a Node category from graph depth
+- Complex path-finding algorithms
+- Multi-user sharing
+- i18n implementation
+- Final XP, evidence, or Goal-specific metadata design
 
 ## Confirmed Requirements
 
-- Goal（目標）をボード上に表示できる
-- Goalに「目指す世界」「やりたいこと」の説明を持たせられる
-- Skillをボードとして視覚的に表示する
-- Skillに習熟レベルを持たせる
-- Skillの証明として実績を表示する
-- 実績は外部サービス（GitHub、Xなど）のリンクを添付できる
-- 実績リンクから、何を積み上げたかをユーザーが読み取れる
-- Skillは親子関係を持てる（TRUNKにもLEAFにもなれる）
-- Goalに必要なSkillを紐づけて表示できる
-- Goal達成に向けた進捗を、関連Skillの習熟度とEvidenceから読み取れる
-- データ読み書きは将来課題として、現段階では体験を優先する
-- 他ユーザーのSkillを部分的に取り込める
-- 同一Skillはユーザー内で1件に統合できる運用を持つ
-- 将来は外部連携イベントで経験値を自動加算できる拡張余地を持つ
+- Skills and Goals can both add Nodes.
+- Map displays Skill and Goal Nodes in the same graph.
+- A Node can have multiple parents and multiple children.
+- A Node can be both a parent and a child.
+- Map is primarily an inspection surface.
+- Map supports view operations such as zoom and pan without becoming an editing surface.
+- Node relationship editing happens on the Node edit page.
+- `Add parent` and `Add child` open a Node selection dialog.
+- Node category is a display classification, not a domain type.
+- For a selected reference layer, Nodes on the parent side can be presented as Goals and Nodes on the child side can be presented as Skills.
+- XP, vision, evidence, and other Node-specific fields remain open for later design.
 
 ## Assumptions
 
-- 初期の習熟レベルは離散値（例: 1-5）とする
-- 実績は最小構成としてタイトル + 外部リンクURLを扱う
-- Goalは最小構成としてタイトル + 説明（目指す世界/やりたいこと）を扱う
-- 親子関係は循環を許可しない
-- 1つのSkillが親と子を同時に持つことを許可する
-- 自然言語名だけで同一性を自動確定しない
-- 同一性の最終決定はユーザー操作で確定できる
-- 自動加算はMVP-1では実装せず、手動登録Evidenceのみ扱う
+- The initial category terminology may change after interaction validation.
+- The reference layer is a view or filter setting and does not change the Node's identity.
+- Relationship direction is stored once on the child as parent references; child lists are derived.
+- Existing saved Skill/Goal data must not be discarded during migration.
+- Self-reference and duplicate relationships are invalid.
+- Whether cycles are allowed is unresolved and must be decided before relationship implementation.
 
-### Decisions for the first vertical slice
+## Decisions for the First Vertical Slice
 
-- 表示はGoalを起点にSkillを並べる2D投影とする。内部データと表示方式は分離し、将来の3D/4D表示を妨げない。
-- 経験値はユーザー個人のSkill経験値として扱い、`level` は0-100の経験値を1-5へ変換して表示する。
-- Skillの状態ラベルは `未経験`、`学習中`、`実践中`、`熟練` の固定値とする。自由タグと他ユーザーからの評価値は将来計画に残す。
-- 今回の縦切りではGoalの表示、Skillの追加、経験値・レベル・状態ラベルの編集を対象とし、Evidence、親子編集、Importは後続とする。
-- 既存MVP-0の保存データを読めるよう、新しいSkill属性は任意フィールドとして追加する。
-- Skillの作成は `Skills` 画面に集約し、`Map` はSkillの配置・関係編集・詳細確認に専念する。
-- 既存のQuestデータとRedux処理は保持するが、今回のナビゲーションではQuest画面を表示せず、同じ導線を `Skills` として扱う。
+- Use **Node** as the domain entity name.
+- Use **Node category** as the provisional term for display classification.
+- Treat the selected layer as a reference point for presenting parent-side Nodes as Goals and child-side Nodes as Skills.
+- Do not encode `Skill` or `Goal` as mutually exclusive domain types.
+- Keep Map read-only for relationship editing. A selected Map Node can navigate to its edit page.
+- Treat zoom and pan as view operations. The desktop interaction candidate is Middle Mouse; touch gestures are future platform work.
+- Edit relationships with `Add parent` and `Add child` actions followed by a Node selection dialog.
+- Add category editing later, after the relationship interaction is validated.
 
 ## Provisional Interaction Specification
 
-This section records the current interaction direction. It is not a final product specification and must be validated through a runnable prototype before the next production implementation.
+This section is provisional until a runnable prototype has been tried.
 
 ### Selected direction
 
-Use a hybrid of two interaction models:
+Use a shared Node graph with a read-only Map and a Node edit page for relationships.
 
-- **Tree model**: show parent-child and prerequisite relationships as a navigable tree. Selecting a node opens its details, including prerequisites, dependents, attainment, and related Goals.
-- **Skill Board model**: use attainment earned by the user to satisfy prerequisites. A Skill remains locked until its prerequisites are satisfied; increasing its personal XP can unlock the next Skill or Goal.
+1. Select a Node in Map.
+2. Open the Node edit page.
+3. Choose `Add parent` or `Add child`.
+4. Select a Node in the dialog.
+5. Confirm the relationship.
+6. Review the updated parent and child lists.
+7. Return to Map and confirm the unified graph.
 
-The tree is the primary relationship model. The board is a progression view over the same nodes and relationships, not a separate data model.
+### Interaction rules
 
-### Core operation sequence
+- `Add parent` adds the selected Node as a parent of the current Node.
+- `Add child` adds the selected Node as a child of the current Node.
+- The current Node is excluded from the selection dialog.
+- Existing relationships cannot be added twice.
+- Dialog cancellation does not change state.
+- Zoom and pan do not mutate Node data.
+- Relationship removal is available on the edit page.
+- Invalid relationships show a visible error and do not update the Board.
 
-1. Select a Skill node in the tree or board.
-2. Open the Skill detail view.
-3. Inspect its prerequisites, dependent Skills, related Goals, current XP, and lock state.
-4. Add or remove a prerequisite from the detail view.
-5. Increase the user's XP for the selected Skill.
-6. Recalculate dependent Skill and Goal lock states immediately.
-7. Select an unlocked node and repeat the process.
+### Interaction validation record
 
-### Interaction rules for the prototype
-
-- A node click selects the node and keeps the detail view open.
-- A blocked node explains which prerequisite is missing.
-- XP belongs to the current user and is the input for unlocking.
-- Relationship edits are explicit and reversible through add/remove controls.
-- Goal unlock state is derived from the user's XP on its required Skills.
-- The prototype should make dependent nodes and Goals visibly update after each XP or relationship change.
-
-### Rejected for now
-
-- A purely decorative graph where relationships cannot be inspected or edited.
-- Editing relationships directly through small controls embedded in every card.
-- Treating a Skill's general popularity or other users' evaluations as the user's personal attainment.
-
-### Validation status
-
-- Prototype A, Git Tree: represented by the in-app `Tree` mode and selected-node detail view.
-- Prototype B, Skill Board: represented by the in-app `Board` mode and XP-based unlock flow.
-- The standalone prototype page was removed after both interaction models were integrated into the product.
-- User feedback: the Git Tree relationship experience is preferred, while the Skill Board lock and unlock progression is also preferred.
-- Next validation: implement the hybrid interaction in the main app and verify node selection, detail inspection, prerequisite editing, XP changes, and Goal unlocking as one complete flow.
-
-Until that validation is complete, this section remains provisional and may be revised without a data migration commitment.
+- Prototype A: Checkbox editor with persistent parent and child checkbox lists.
+- Prototype B: Selection dialog opened by `Add parent` or `Add child`.
+- User direction: Prototype B is preferred provisionally.
+- Required validation: Try both prototypes and compare discoverability, cancellation, duplicate prevention, relationship direction, and recovery after an invalid action.
+- Rejected alternative: Editing relationships directly on Map Nodes, because Map should remain an inspection surface.
 
 ## Open Questions
 
-- 習熟レベルの将来の最終スケール（現在は1-5で実装）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: UI実装前
-- 実績の最小データ形（今回の縦切りでは未実装）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: State設計前
-- Skill自体の評価値と個人経験値の分離
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: Component設計前
-- 外部サービス連携時の加算式（イベント1件ごとに固定値 / 種別ごと重み）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: 自動加算機能のImplementation前
-- 2D以外の表示形式（3D/4Dを含む）と投影ルール
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: Component設計前
-- 同一候補の提示条件（完全一致のみ / 類似一致を含む）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: Import UI実装前
-- Goal進捗の見せ方（達成率バー / 未達項目リスト / ラベル）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: Component設計前
+- Is **Node category** the final term, or should the UI use another term such as `role` or 'layer'?
+  - Owner: Product owner
+  - Decision point: Before Node model implementation
+- Is the reference layer selected by the user, or fixed by the current board view?
+  - Owner: Product owner
+  - Decision point: Before Skills/Goals view implementation
+- Are parent-side and child-side classifications only visual labels, or should they filter the Skills and Goals pages?
+  - Owner: Product owner
+  - Decision point: Before list and navigation implementation
+- Are cycles allowed in the general Node graph?
+  - Owner: Product owner
+  - Decision point: Before relationship validation implementation
+- How should existing Skill and Goal records migrate into Nodes?
+  - Owner: Implementation team
+  - Decision point: Before persistence changes
+- What are the final XP, evidence, and vision fields?
+  - Owner: Product owner
+  - Decision point: Before progression metadata implementation
 
 ## User Flow and Acceptance Criteria
 
-1. ユーザーがSkillを追加する。
-2. ユーザーが習熟レベルを設定する。
-3. ユーザーが実績を追加し、外部リンクを添付する。
-4. ユーザーがGoal（目標）を追加し、目指す世界/やりたいことを入力する。
-5. ユーザーがGoalに必要なSkillを紐づける。
-6. ユーザーが親子関係を設定する。
-7. ボード上でGoal、Skill、レベル、実績、関係を確認する。
+1. Add a Node from the Skills or Goals entry point.
+2. Select the Node in Map.
+3. Open its edit page.
+4. Add a parent or child through the selection dialog.
+5. Remove the relationship from the edit page.
+6. Confirm the same Node and relationship in Map.
 
 Acceptance criteria:
 
-- [ ] Skillカード（またはノード）に名前とレベルが表示される
-- [ ] Skillカード（またはノード）に実績タイトルと外部リンクが表示される
-- [ ] Goalカードにタイトルと説明（目指す世界/やりたいこと）が表示される
-- [ ] Goalに紐づく必要Skillを確認できる
-- [ ] 親子関係が視覚的に識別できる
-- [ ] 親であるSkillが同時に子としても扱える
-- [ ] 保存機能が未実装でも、1セッション内で体験検証できる
-- [ ] 部分Import時に候補Skillへマージするか新規作成するかを選べる
-- [ ] マージ後も親子関係と実績が破綻しない
-- [ ] 将来の自動加算機能を追加しても、既存Evidence表示が壊れない
+- [ ] Skills can add a Node.
+- [ ] Goals can add a Node.
+- [ ] Map displays all Nodes in one graph.
+- [ ] A Map Node opens its edit page.
+- [ ] A parent can be added from the edit page.
+- [ ] A child can be added from the edit page.
+- [ ] A relationship can be removed from the edit page.
+- [ ] One Node can appear as both parent and child.
+- [ ] The selection dialog excludes the current Node and duplicate relationships.
+- [ ] Invalid relationship updates are rejected without mutating state.
+- [ ] Parent-side and child-side presentation follows the selected reference layer.
+- [ ] Existing saved data remains readable during migration.
 
 ## Data Model and Persistence
 
-最小の体験検証向けモデル（永続化形式は未確定）。
+The target model uses one Node collection. Skill and Goal are not separate graph entities.
 
 ```ts
-export type SkillLevel = 1 | 2 | 3 | 4 | 5;
-
-export type Evidence = {
+export type BoardNode = {
   id: string;
-  title: string;
-  provider: 'github' | 'x' | 'other';
-  linkUrl: string;
-  activityType?: string;
-  achievedAt?: string;
-  note?: string;
-  sourceEventId?: string;
-  xpDelta?: number;
-};
-
-export type SkillNode = {
-  id: string;
-  canonicalSkillId: string;
   name: string;
-  aliases?: string[];
-  level: SkillLevel;
-  xp: number;
-  evidence: Evidence[];
-  parentSkillIds: string[];
-  childSkillIds: string[];
-  sourceRefs?: SkillSourceRef[];
+  parentNodeIds: string[];
+  category?: string;
+  layoutX?: number;
+  layoutY?: number;
 };
 
 export type SkillBoard = {
   version: 1;
-  goals: GoalNode[];
-  skills: SkillNode[];
-};
-
-export type SkillSourceRef = {
-  sourceUserId: string;
-  sourceBoardId: string;
-  sourceSkillId: string;
-  importedAt: string;
-};
-
-export type GoalNode = {
-  id: string;
-  title: string;
-  vision?: string;
-  intent?: string;
-  requiredSkillIds: string[];
+  nodes: BoardNode[];
 };
 ```
 
-今回の実装では、既存MVP-0との互換性を保つため、現在の `Skill` に次の任意属性を追加する。
+Child Nodes are derived by finding Nodes whose `parentNodeIds` include the current Node ID. XP, level, status, vision, evidence, and import references are optional extensions and do not determine whether a Node is a Skill or Goal.
 
-```ts
-type Skill = {
-  id: string;
-  name: string;
-  xp?: number; // 0-100, ユーザー個人の経験値
-  level?: 1 | 2 | 3 | 4 | 5;
-  status?: 'new' | 'learning' | 'practicing' | 'mastered';
-};
-
-type Goal = {
-  id: string;
-  title: string;
-  vision?: string;
-};
-```
-
-`xp` は20刻みでレベル1-5へ投影する。2DボードはGoalとSkillの現在状態を表示するビューであり、
-将来の3D/4D表示は同じBoardデータに対する別の投影として追加する。
-
-- Persistenceは将来課題のため、この段階ではランタイム状態のみを対象にする
-- 既存MVP-0の保存層は壊さず、体験確認に必要な表示中心で段階導入する
-
-### Proficiency and evidence model
-
-- MVP-1では手動入力したEvidenceを表示し、`xp` は手動調整または簡易加算で扱う
-- `level` は表示しやすさのため残し、`xp` から導く計算式は将来確定する
-- 外部リンクは証明情報として表示するが、リンク先の内容検証までは行わない
-
-### Goal-driven board model
-
-- Goalはボードの起点情報として扱う
-- SkillはGoal達成に必要な要素として紐づける
-- EvidenceはSkillの裏づけ情報として表示し、Goalに対する進捗判断の材料にする
-- MVP-1では計算済みの達成率は必須にせず、Goalと関連Skillの可視化を優先する
-
-### Future automatic XP sync
-
-- 対象例: GitHub commit / PR merge、X投稿
-- MVP-1では未実装（設計上の拡張点のみ用意）
-- 将来は `sourceEventId` で重複加算を防ぐ
-- provider別に加算重みを持てる構造にする
-
-### User-scoped uniqueness model
-
-- `id`: 現在のBoard内でのノードID（UI操作や親子リンクで使用）
-- `canonicalSkillId`: 「同一Skill」を表すユーザー内一意キー
-- `name`: 表示名（自然言語、重複し得る）
-
-この構成により、表示名は自由入力のままにしつつ、同一性は`canonicalSkillId`で管理する。自然言語だけで同一判定しない。
-
-### Partial import merge rules
-
-他ユーザーからSkillを部分Importする際の順序:
-
-1. `sourceSkill.canonicalSkillId` が存在し、取り込み先に同じIDがある場合:
-   - 同一としてマージ候補を提示（既定: マージ）
-2. 1に該当しない場合:
-   - `normalized(name)` の完全一致を候補として提示（自動確定はしない）
-3. 候補がない場合:
-   - 新規Skillとして追加
-
-マージ時の最小ルール:
-
-- `level`: 高い方を採用（履歴導入前の暫定）
-- `evidence`: `id`重複を除外して結合
-- 関係情報: 循環検証後に親子リンクへ反映。循環になるリンクはスキップして警告表示
-- `sourceRefs`: 追記して取り込み元を保持
+The persistence adapter must support a migration path from the current `{ skills, goals }` shape to `{ nodes }`. The migration must preserve IDs, names, layout data, parent links, and any existing progression fields. The exact migration mapping remains an open question.
 
 ## Implementation Design
 
 ### Module Boundaries
 
-- `domain`: SkillNode、GoalNode、Evidence、階層関係の検証（循環禁止など）
-- `store`: 状態遷移（追加、編集、関係更新、Goal関連付け）
-- `components`: ボード表示、Goal表示、編集UI、レベル表示UI
-- `application/persistence`: このフェーズでは拡張最小。I/O機能は保留
+- `domain`: BoardNode, relationship validation, reference-layer presentation rules
+- `store`: Node creation, update, deletion, relationship actions, and migration state
+- `components`: unified Map, Skills/Goals views, Node edit page, and Node selection dialog
+- `application`: persistence port and migration orchestration
+- `persistence`: serialization and legacy data migration
 
 ### State and Data Flow
 
 ```text
-UI action
+Map or entry view
   -> Redux action
-  -> Reducer (state update)
-  -> Board re-render
+  -> domain validation / reducer or saga
+  -> persistence adapter
+  -> unified Node Board
+  -> Map and filtered views re-render
 ```
 
 ### Error Handling
 
-- 無効な関係（自己参照、循環）は更新を拒否し、UIで通知する
-- 実績の必須項目不足は保存せず入力エラーを表示する
-- 実績リンクURLが不正な場合は登録しない
-- レベル範囲外は受け付けない
-- 同一候補が複数ある場合は自動確定せず、ユーザーに選択させる
-- Importマージで循環が発生する場合は、そのリンクのみ拒否して他の取り込みは継続する
+- Empty Node names are rejected.
+- Self-reference and duplicate relationships are rejected.
+- Cycle behavior follows the decision made before implementation.
+- A failed save leaves the current Board unchanged and shows an error.
+- Invalid legacy data is handled through the existing persistence error contract.
 
 ### Platform Considerations
 
-- Windows/Webを最優先で体験検証
-- Android/iOSは同一UI構造を維持できる設計にとどめる
+- Windows/Web is the primary validation platform.
+- The edit page and selection dialog should work with keyboard and touch input.
+- Android and iOS should be able to reuse the same interaction structure.
 
 ## Test Strategy
 
 ### Unit Tests
 
-- 関係更新時に循環を拒否する
-- Skillの追加/更新/削除で整合性が維持される
-- 親子関係の双方向整合（親追加時に子側も更新される）
-- Goal作成と必要Skill紐づけの整合性を維持する
-- 部分Import時に `canonicalSkillId` 一致ならマージ候補になる
-- name一致のみの場合は候補提示に留まり、自動マージしない
-- マージ時にevidence重複除外と循環リンク拒否が動作する
+- Add and normalize a Node.
+- Add a parent relationship in the correct direction.
+- Add a child relationship in the correct direction.
+- Reject self-reference and duplicate relationships.
+- Verify selected-layer parent/child presentation.
+- Verify migration preserves IDs, names, links, and optional fields.
 
 ### Component or Integration Tests
 
-- Skill追加でボードに表示される
-- レベル変更で表示が更新される
-- 実績追加でカードにタイトルと外部リンクが表示される
-- Goal追加でボードに表示される
-- Goalと必要Skillの関連表示が更新される
-- 親子設定で関係表示が更新される
-- 部分Import時に「マージ / 新規追加」を選択できる
+- Add a Node from Skills and see it in Map.
+- Add a Node from Goals and see it in Map.
+- Navigate from Map to the Node edit page.
+- Add a parent and child through the dialog.
+- Cancel the dialog without changing state.
+- Remove a relationship and verify Map updates.
+- Confirm that a Node can be both parent and child.
 
 ### Manual Verification
 
-- 複数Skillを追加して親子関係を作成
-- 1つのSkillが親かつ子として表示されることを確認
-- Goalを作成し、必要Skillと実績が読み取れることを確認
-- 実績表示が読みやすいことを確認
+- Create Nodes on both sides of a selected reference layer.
+- Build a three-level parent/child chain.
+- Verify parent-side and child-side presentation.
+- Try duplicate, self-reference, invalid, and cancelled operations.
+- Reload migrated data and verify the unified graph.
 
 ### Regression Risks
 
-- 関係更新ロジックが複雑化すると、双方向整合の破綻リスクがある
-- GoalとSkillの関連更新で孤立参照（存在しないSkill ID）のリスクがある
-- レベル・実績追加でカード密度が上がり、可読性が落ちる可能性
-- 同一候補の誤判定で誤マージが起きるリスクがある
-- 外部リンクの死活や内容変化で証明の信頼性が低下する可能性がある
-- 将来の自動加算で過剰加算や重複加算が起きる可能性がある
+- Migration can create orphaned relationship IDs.
+- Maintaining both legacy and unified shapes temporarily can cause divergent updates.
+- Treating category as a domain type would recreate the current Skill/Goal split.
+- A non-obvious reference layer could make Skills and Goals classification difficult to understand.
 
 ## Rollout and Recovery
 
-- まずは最小表示（名前+レベル）を有効化
-- 次に実績表示を追加
-- 最後に親子関係編集を追加
-- 問題が出た場合は関係編集UIを一時無効化して表示のみ維持する
+- Validate the two relationship prototypes before production UI work.
+- Implement the unified Node model behind the existing persistence boundary.
+- Migrate legacy data without deleting the original record until conversion succeeds.
+- Keep a fallback read path for legacy data during the transition.
+- If relationship editing causes regressions, disable editing while keeping unified Map viewing available.
 
 ## Trade-offs
 
 | Option | Benefits | Costs or risks | Decision |
 | --- | --- | --- | --- |
-| 体験優先でUI/状態を先行 | 早くユーザー価値を検証できる | 永続化と後で統合する作業が必要 | 採用 |
-| 先にTOML入出力を実装 | 保存形式が早期確定できる | 体験改善が遅れる | 不採用（今は保留） |
-| 関係を片方向のみ保持 | 実装が簡単 | 表示時の計算負荷と不整合が増える | 不採用 |
+| Separate Skill and Goal graph types | Simple initial screens | Prevents recursive mixed relationships | Rejected |
+| Shared Node with fixed category type | Easy filtering | Category becomes another rigid type boundary | Rejected |
+| Shared Node with reference-layer presentation | Supports recursive relationships and flexible views | Requires clear reference-layer UX | Provisional choice |
+| Edit relationships directly on Map | Fast access | Makes Map dense and harder to inspect | Rejected |
+| Edit relationships on Node page with selection dialog | Clear direction and recoverable actions | Requires page navigation | Provisional choice |
 
 ## Implementation Checklist
 
-- [x] Plan: scope, priority, and initial acceptance criteria confirmed
-- [x] Change Scope: affected modules, data, platforms, and risks identified
+- [x] Plan: scope, priority, and initial acceptance criteria recorded
+- [x] Change Scope: affected modules, data, platforms, and risks recorded
 - [ ] Detailed Design: open questions resolved and design approved
+- [ ] Interaction prototypes tried and selected model confirmed
 - [ ] Update ADR if the architecture changes
-- [x] Implementation: production code completed
-- [ ] Unit Test: focused unit tests added and passing
+- [ ] Implementation: shared Node model completed
+- [ ] Unit Test: focused Node tests added and passing
 - [ ] Functional Test: acceptance criteria verified
 - [ ] Run validation commands and record results
 - [ ] Record remaining technical issues
-
-## Interaction Validation Record
-
-### Interaction Validation: dependency and goal progression
-
-- Prototype A: Tree. Select a Skill, then add or remove prerequisite Skills from the detail panel. Change XP and observe dependent Skills.
-- Prototype B: Skill Board. Select a node, inspect blocked prerequisites, change attainment, and unlock the node when prerequisites are met.
-- User-selected model: Combine both models. Use the Git Tree operation model for relationships and the Skill Board operation model for XP-based unlocking.
-- Core action sequence: Select a node -> inspect its details -> edit prerequisites or XP -> see dependent and Goal unlock state update.
-- Feedback after each action: Show the selected node, prerequisite list, blocked/unlocked state, XP, level, and Goal progress.
-- Invalid or blocked action behavior: Prevent self-dependencies and keep a node locked while a prerequisite is below the unlock threshold.
-- Undo or recovery behavior: Keep changes local to the selected operation and allow the user to reverse them by removing a prerequisite or lowering XP.
-- Rejected alternatives: A purely decorative graph and inline-only checkbox editing were rejected because they do not make dependency impact easy to inspect.
-- Verification method: Component or functional test for select -> edit relationship -> change XP -> observe dependent and Goal state.
