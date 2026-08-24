@@ -1025,6 +1025,72 @@
     font-size: 12px;
 }
 
+.focus-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    color: #61736c;
+    font-size: 13px;
+}
+
+.focus-breadcrumb button {
+    border: 0;
+    background: transparent;
+    color: #42665d;
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+}
+
+.focus-lane {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    border: 1px dashed #b8c8bd;
+    padding: 14px 16px;
+}
+
+.focus-lane-label {
+    flex: 0 0 90px;
+    color: #61736c;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.focus-lane-empty {
+    color: #61736c;
+    font-size: 13px;
+}
+
+.focus-node {
+    border: 2px solid #b8c8bd;
+    padding: 8px 12px;
+    background: #fffdf8;
+    color: #173f3a;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.focus-node-goal {
+    border-color: #d06443;
+}
+
+.focus-node-skill {
+    border-color: #42665d;
+}
+
+.focus-node-reference {
+    border-color: #173f3a;
+    background: #173f3a;
+    color: #fffdf8;
+    cursor: default;
+}
+
 @media (max-width: 640px) {
     .skill-map-panel {
         grid-template-columns: 1fr;

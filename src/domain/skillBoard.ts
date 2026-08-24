@@ -255,6 +255,42 @@ export const fallbackSkillLayout = (skill: Skill, skills: Skill[]): SkillPositio
     };
 };
 
+export type FocusNode = {
+    id: string;
+    name: string;
+    kind: 'skill' | 'goal';
+};
+
+// Goal-side: Skills or Goals that treat this node as their prerequisite.
+export const focusParents = (nodeId: string, skills: Skill[], goals: Goal[]): FocusNode[] => {
+    const skillParents = skills
+        .filter((skill) => (skill.prerequisiteSkillIds ?? []).includes(nodeId))
+        .map((skill) => ({ id: skill.id, name: skill.name, kind: 'skill' as const }));
+    const goalParents = goals
+        .filter((goal) => (goal.requiredSkillIds ?? []).includes(nodeId))
+        .map((goal) => ({ id: goal.id, name: goal.title, kind: 'goal' as const }));
+    return [...skillParents, ...goalParents];
+};
+
+// Skill-side: this node's own prerequisites (a Goal's prerequisites are its required Skills).
+export const focusChildren = (nodeId: string, skills: Skill[], goals: Goal[]): FocusNode[] => {
+    const goal = goals.find((candidate) => candidate.id === nodeId);
+    const prerequisiteIds = goal
+        ? (goal.requiredSkillIds ?? [])
+        : (skills.find((candidate) => candidate.id === nodeId)?.prerequisiteSkillIds ?? []);
+    return prerequisiteIds
+        .map((id) => skills.find((skill) => skill.id === id))
+        .filter((skill): skill is Skill => Boolean(skill))
+        .map((skill) => ({ id: skill.id, name: skill.name, kind: 'skill' as const }));
+};
+
+export const defaultFocusNodeId = (skills: Skill[]): string | null => {
+    const inProgress = skills.find(
+        (skill) => skill.status === 'learning' || skill.status === 'practicing',
+    );
+    return (inProgress ?? skills[0])?.id ?? null;
+};
+
 export const isSkillBoard = (value: unknown): value is SkillBoard => {
     if (!value || typeof value !== 'object') {
         return false;

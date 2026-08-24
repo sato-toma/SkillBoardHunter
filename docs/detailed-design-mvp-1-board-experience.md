@@ -119,14 +119,50 @@ Use a shared Node graph with a read-only Map and a Node edit page for relationsh
 - Required validation: Try both prototypes and compare discoverability, cancellation, duplicate prevention, relationship direction, and recovery after an invalid action.
 - Rejected alternative: Editing relationships directly on Map Nodes, because Map should remain an inspection surface.
 
+### Interaction Validation: Layer grouping (reference-node navigation)
+
+- Prototype A: Fixed depth bands. All layers stay visible at once; clicking any Node makes it the reference and relabels Goal-side/Skill-side around it, but nothing is hidden.
+- Prototype B: Focus window. Only three bands are visible: parents (Goal-side), the reference Node, and children (Skill-side). Clicking a parent or child card re-centers the view on that Node; a breadcrumb keeps earlier reference Nodes reachable.
+- User-selected model: Prototype B, for a **focused** context where the user is working toward one Goal.
+- Core action sequence: click a Goal-side card to move the reference up one layer, click a Skill-side card to move it down one layer, or click a breadcrumb entry to jump back to an earlier reference.
+- Feedback after each action: Goal-side/Skill-side bands relabel around the new reference; the breadcrumb grows.
+- Invalid or blocked action behavior: a band with no parent or no child shows a placeholder message instead of staying empty.
+- Undo or recovery behavior: breadcrumb entries let the user return to any earlier reference Node without losing state.
+- Rejected alternative: none fully rejected. Prototype A remains a candidate for a separate **exploration** context (see below) rather than being discarded.
+- Verification method: manual click-through of a disposable HTML prototype; the prototype was removed after validation and is not backed by an automated test.
+
+New scope discovered during validation:
+
+- Two different usage contexts emerged. An **exploration context** should show a Node's multiple parents (Goals) at once, useful when looking for many possible directions from acquired Skills. A **focused context** should show only one active Goal at a time, useful once the user has committed to a direction and is leveling up Skills toward it.
+- Confirmed direction: keep the existing Map as the exploration context, since it already shows the full graph. Layer navigation is a new, separate **Focus** page rather than a mode toggle inside Map.
+- Confirmed: the focused view's initial reference Node defaults to a Skill currently in `learning` or `practicing` status.
+- Whether this grouping makes unlocking the board more fun is unconfirmed. Treat it as an experiment, not a committed feature, until validated with real use.
+
+### First implementation (Focus page)
+
+- Added `src/components/FocusView.tsx`, a read-only page reachable from `WorkspaceNav` as `focus`.
+- Reuses the existing `Skill`/`Goal` data; no Node model migration was needed for this first slice.
+- Domain helpers in `src/domain/skillBoard.ts`: `focusParents` (Skills whose `prerequisiteSkillIds` include the node, plus Goals whose `requiredSkillIds` include it), `focusChildren` (a Skill's own prerequisites, or a Goal's required Skills), and `defaultFocusNodeId`.
+- The Goal-side band can show more than one entry when a node has multiple parents (mirrors the validated prototype). The "designate a single active Goal" idea from user feedback is **not implemented**; this remains an open question below.
+- Verified manually in the running app: default reference selection, moving up via a Goal-side card, moving down via a Skill-side card, and returning through the breadcrumb.
+- Unit tests: `src/domain/layerFocus.test.ts` covers `focusParents`, `focusChildren`, and `defaultFocusNodeId`, including empty-parent and empty-child cases.
+- Not yet done: component/integration test for `FocusView` itself, and a decision on restricting the Goal-side band to a single designated Goal.
+
 ## Open Questions
 
-- Is **Node category** the final term, or should the UI use another term such as `role` or 'layer'?
+- Is **Node category** the final term, or should the UI use another term such as `role` or 'layer'? The user proposed 'layer' but is not sure it is the right word.
   - Owner: Product owner
   - Decision point: Before Node model implementation
 - Is the reference layer selected by the user, or fixed by the current board view?
+  - Resolved by prototype: the user selects the reference Node by clicking it. Clicking a parent (Goal-side) card moves the reference up one layer; clicking a child (Skill-side) card moves it down one layer. See "Interaction Validation: Layer grouping" below.
+- ~~Does the focused single-Goal layer view live on a new dedicated page, or as a toggle inside the existing Map?~~ Resolved: implemented as a new `Focus` page, separate from Map/Skills/Goals.
+- How is a single active Goal designated when a Node has multiple parents, for the focused context?
   - Owner: Product owner
-  - Decision point: Before Skills/Goals view implementation
+  - Decision point: Before layer-navigation implementation
+  - Provisional direction: designated ahead of time from the Skills or Goals view. The exact mechanism (a "current Goal" flag, pinning, etc.) is undecided.
+- Is grouping Nodes by layer worth building at all? The user is unsure it makes unlocking the board more fun.
+  - Owner: Product owner
+  - Decision point: Before committing to layer-navigation implementation; treat as an experiment to validate with real use.
 - Are parent-side and child-side classifications only visual labels, or should they filter the Skills and Goals pages?
   - Owner: Product owner
   - Decision point: Before list and navigation implementation
