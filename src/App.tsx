@@ -12,6 +12,7 @@ import {
     appStarted,
     loadSampleRequested,
     updateSkillDependenciesRequested,
+    updateSkillDetailsRequested,
     updateSkillPositionRequested,
     updateSkillRequested,
 } from './store/skillBoardSlice';
@@ -120,6 +121,15 @@ function App() {
                                 prerequisiteSkillIds: (skill.prerequisiteSkillIds ?? []).filter(
                                     (id) => id !== prerequisiteId,
                                 ),
+                            }),
+                        )
+                    }
+                    onEditSave={(skill, updates) =>
+                        dispatch(
+                            updateSkillDetailsRequested({
+                                id: skill.id,
+                                name: updates.name,
+                                status: updates.status,
                             }),
                         )
                     }

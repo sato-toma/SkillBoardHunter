@@ -20,7 +20,6 @@ const nameOf = (id: string, skills: Skill[], goals: Goal[]): string =>
 
 export function FocusView({ skills, goals }: FocusViewProps) {
     const [referenceId, setReferenceId] = useState<string | null>(() => defaultFocusNodeId(skills));
-    const [trail, setTrail] = useState<string[]>([]);
 
     useEffect(() => {
         const stillExists =
@@ -29,19 +28,12 @@ export function FocusView({ skills, goals }: FocusViewProps) {
                 goals.some((goal) => goal.id === referenceId));
         if (!stillExists) {
             setReferenceId(defaultFocusNodeId(skills));
-            setTrail([]);
         }
     }, [skills, goals, referenceId]);
 
     const moveTo = (nextId: string) => {
         if (!referenceId || nextId === referenceId) return;
-        setTrail((current) => [...current, referenceId]);
         setReferenceId(nextId);
-    };
-
-    const jumpTo = (id: string, index: number) => {
-        setTrail((current) => current.slice(0, index));
-        setReferenceId(id);
     };
 
     const parents = useMemo<FocusNode[]>(
@@ -68,25 +60,12 @@ export function FocusView({ skills, goals }: FocusViewProps) {
         <section className="workspace-view focus-view" aria-label="Focus">
             <div className="workspace-view-heading">
                 <span className="eyebrow">FOCUS</span>
-                <h2>Follow one path from Skill to Goal.</h2>
+                <h2>See one node's direct parents and children.</h2>
                 <p>
-                    This is an experiment: it is not yet clear whether following one path at a time
-                    makes unlocking the board more fun.
+                    This is an experiment: it is not yet clear whether focusing on one node at a
+                    time makes unlocking the board more fun.
                 </p>
             </div>
-            {trail.length > 0 && (
-                <div className="focus-breadcrumb">
-                    {trail.map((id, index) => (
-                        <span key={id}>
-                            <button type="button" onClick={() => jumpTo(id, index)}>
-                                {nameOf(id, skills, goals)}
-                            </button>
-                            <span aria-hidden="true"> → </span>
-                        </span>
-                    ))}
-                    <strong>{nameOf(referenceId, skills, goals)}</strong>
-                </div>
-            )}
             <div className="focus-lane focus-lane-goal">
                 <span className="focus-lane-label">Goal-side</span>
                 {parents.length === 0 && (

@@ -10,8 +10,8 @@ Draft
 | --- | --- | --- |
 | Plan | Complete | User request 2026-08-21 |
 | Change Scope | Complete | This document |
-| Detailed Design | Provisional | Shared Node model and relationship interaction are recorded; prototype validation is pending |
-| Implementation | Partial | Previous Skill/Goal vertical slice is implemented; shared Node model is not implemented |
+| Detailed Design | Provisional | Map vs Focus split, Focus simplification, and Node edit page scope confirmed 2026-08-30 (see interaction validation records); unified Node model relationship interaction still needs prototype validation |
+| Implementation | Partial | Previous Skill/Goal vertical slice is implemented; Node edit page (name/status) and simplified Focus are implemented; shared Node model is not implemented |
 | Unit Test | In progress | Existing Redux and domain tests pass; new Node tests are not started |
 | Functional Test | Not started |  |
 
@@ -63,6 +63,7 @@ Represent the user's direction and capabilities as one connected board. `Skill` 
 - Node category is a display classification, not a domain type.
 - For a selected reference layer, Nodes on the parent side can be presented as Goals and Nodes on the child side can be presented as Skills.
 - XP, vision, evidence, and other Node-specific fields remain open for later design.
+- **Superseded 2026-08-30:** "Map is primarily an inspection surface" and "Node relationship editing happens on the Node edit page" are replaced by the Map vs Focus split below. Map keeps direct connection editing; there is no separate Node edit page for now.
 
 ## Assumptions
 
@@ -79,10 +80,9 @@ Represent the user's direction and capabilities as one connected board. `Skill` 
 - Use **Node category** as the provisional term for display classification.
 - Treat the selected layer as a reference point for presenting parent-side Nodes as Goals and child-side Nodes as Skills.
 - Do not encode `Skill` or `Goal` as mutually exclusive domain types.
-- Keep Map read-only for relationship editing. A selected Map Node can navigate to its edit page.
 - Treat zoom and pan as view operations. The desktop interaction candidate is Middle Mouse; touch gestures are future platform work.
-- Edit relationships with `Add parent` and `Add child` actions followed by a Node selection dialog.
 - Add category editing later, after the relationship interaction is validated.
+- **Superseded 2026-08-30:** the "read-only Map plus separate Node edit page with Add parent/Add child dialog" direction is replaced. See "Interaction Validation: Map vs Focus responsibility split" below.
 
 ## Provisional Interaction Specification
 
@@ -117,7 +117,8 @@ Use a shared Node graph with a read-only Map and a Node edit page for relationsh
 - Prototype B: Selection dialog opened by `Add parent` or `Add child`.
 - User direction: Prototype B is preferred provisionally.
 - Required validation: Try both prototypes and compare discoverability, cancellation, duplicate prevention, relationship direction, and recovery after an invalid action.
-- Rejected alternative: Editing relationships directly on Map Nodes, because Map should remain an inspection surface.
+- **Superseded 2026-08-30:** this whole record assumed Map would become read-only and editing would move to a separate Node edit page. See "Interaction Validation: Map vs Focus responsibility split" below for the current direction. This record is kept for history only.
+- Previously rejected alternative (now reconsidered): Editing relationships directly on Map Nodes, because Map should remain an inspection surface.
 
 ### Interaction Validation: Layer grouping (reference-node navigation)
 
@@ -147,6 +148,42 @@ New scope discovered during validation:
 - Verified manually in the running app: default reference selection, moving up via a Goal-side card, moving down via a Skill-side card, and returning through the breadcrumb.
 - Unit tests: `src/domain/layerFocus.test.ts` covers `focusParents`, `focusChildren`, and `defaultFocusNodeId`, including empty-parent and empty-child cases.
 - Not yet done: component/integration test for `FocusView` itself, and a decision on restricting the Goal-side band to a single designated Goal.
+
+### Interaction Validation: Focus simplification (2026-08-30)
+
+The user found the breadcrumb/multi-step history confusing: after moving the reference, the node they came from lost its highlight and became just one more list entry, so they could not tell "this is the node I was looking at". The actual need was simpler: see one node's direct connections locally, not manage navigation history.
+
+- Rejected: keep the breadcrumb but highlight the previous node distinctly. Reason: the user preferred removing the history mechanism entirely rather than making it more visible.
+- Confirmed model: Focus always shows only the current node's direct parents (Goal-side) and direct children (Skill-side), with no breadcrumb and no navigation history. Clicking a Goal-side or Skill-side card changes the current node immediately; there is no trail to go back through.
+- Implementation: removed the `trail` state, `jumpTo`, and the breadcrumb UI from `FocusView.tsx`. `moveTo` now only updates `referenceId`.
+- Consequence: there is no way to jump back to a previously viewed node except by clicking through parents/children again, or by returning to Map and reselecting. This is accepted for now; revisit only if losing history proves painful in real use.
+- Verification method: `npm test` passes; manual check in the running app that clicking a Goal-side or Skill-side card updates the three bands with no breadcrumb shown.
+
+### Interaction Validation: Map vs Focus responsibility split
+
+The user lost track of why Map and Focus behave differently. This record captures the clarified mental model, confirmed by the user on 2026-08-30.
+
+- Option A (previous plan): Map becomes read-only. All relationship editing moves to a dedicated Node edit page reached from Map, using `Add parent`/`Add child` dialogs.
+- Option B (current implementation): Map keeps the full graph with a fixed reference (no layer switching) and direct connection editing on the graph itself (`onToggleLink`, `onRemovePrerequisite` in `SkillMapWorkspace`). Focus stays read-only and only changes which layer/reference is displayed.
+- User-selected model: Option B. Map answers "what Skill can I aim for next", using the full graph with editable connections and no layer switching. Focus answers "what does the board look like around this layer", using layer navigation with no editing.
+- Core action sequence:
+  - Map: click/drag to connect or disconnect two Skill nodes; the reference (whole graph) never changes.
+  - Focus: click a Goal-side or Skill-side card to move to that node and see its direct parents/children. No connection editing here, and no navigation history (see "Interaction Validation: Focus simplification").
+- Feedback after each action: Map re-renders the changed connection immediately; Focus relabels its three bands around the new current node.
+- Invalid or blocked action behavior: unchanged from each view's existing behavior (Map shows the existing error message region; Focus shows a placeholder for an empty band).
+- Undo or recovery behavior: Map edits can be reversed by repeating the toggle. Focus has no history; returning to an earlier node means clicking through parents/children again or reselecting in Map.
+- Rejected alternative: the separate Node edit page with a selection dialog (Option A). Reason: it added an extra navigation step for an action (connecting Skills) the user wants to do while looking at the full Map.
+- Open follow-up: the user tentatively suggested Focus could also gain connection editing, sharing the same editing interaction as Map, but decided to keep Focus read-only for now. Revisit this only if layer navigation alone proves insufficient in real use.
+- Verification method: no new code was needed, since the current Map and Focus implementations already match this model. Verify by running the app: confirm Map has no layer/reference control and its existing connection edit controls still work, and confirm Focus has no connection-editing control and only changes the displayed layer.
+
+### Interaction Validation: Node edit page (2026-08-30)
+
+- Confirmed need: a Node edit page for fields the Map graph and its inline side panel do not cover (rename, status). This is separate from connection editing, which stays on Map (see the split above).
+- Scope for this slice: edit an existing Skill's `name` and `status`. `level` is derived from `xp` (see `levelFromXp`) and is not independently editable. Category, evidence, and vision fields are out of scope until the unified Node model defines them (see Open Questions).
+- How it opens: an explicit `Edit` button on the selected Node's side panel in Map (`SkillMapDetail`), not a click on the Node itself, so accidental edits during graph browsing are avoided.
+- Implementation: `src/components/NodeEditPage.tsx`, a modal dialog with a name field and a status dropdown, opened from `SkillMapDetail` and wired through `SkillMapWorkspace` to a new `updateSkillDetailsRequested` action (`skillBoardSlice.ts`, handled in `skillBoardSaga.ts`). Cancelling or clicking outside the dialog discards changes; Save rejects an empty name with an inline error and does not close the dialog.
+- Not yet done: an equivalent edit page for Goals (title, vision); component/integration test for `NodeEditPage`.
+- Verification method: `npm test` passes with existing saga/slice tests; manual check in the running app that Edit opens the dialog, Cancel discards changes, and Save updates the name/status shown in Map.
 
 ## Open Questions
 
@@ -178,6 +215,8 @@ New scope discovered during validation:
 
 ## User Flow and Acceptance Criteria
 
+**Superseded 2026-08-30:** steps 2-5 below described the read-only-Map-plus-edit-page flow. The confirmed direction is direct editing on Map instead (see "Interaction Validation: Map vs Focus responsibility split"). This flow and its acceptance criteria need to be rewritten before the unified Node model is implemented; keep them here only as history until that rewrite happens.
+
 1. Add a Node from the Skills or Goals entry point.
 2. Select the Node in Map.
 3. Open its edit page.
@@ -185,7 +224,7 @@ New scope discovered during validation:
 5. Remove the relationship from the edit page.
 6. Confirm the same Node and relationship in Map.
 
-Acceptance criteria:
+Acceptance criteria (historical, pending rewrite):
 
 - [ ] Skills can add a Node.
 - [ ] Goals can add a Node.
@@ -256,7 +295,7 @@ Map or entry view
 ### Platform Considerations
 
 - Windows/Web is the primary validation platform.
-- The edit page and selection dialog should work with keyboard and touch input.
+- Direct connection editing on Map should work with keyboard and touch input, not only mouse drag.
 - Android and iOS should be able to reuse the same interaction structure.
 
 ## Test Strategy
@@ -274,11 +313,11 @@ Map or entry view
 
 - Add a Node from Skills and see it in Map.
 - Add a Node from Goals and see it in Map.
-- Navigate from Map to the Node edit page.
-- Add a parent and child through the dialog.
-- Cancel the dialog without changing state.
-- Remove a relationship and verify Map updates.
+- Add a connection directly on Map and verify both Nodes' parent/child lists update.
+- Remove a connection directly on Map and verify Map updates.
+- Reject an invalid connection (self-reference or duplicate) without mutating state.
 - Confirm that a Node can be both parent and child.
+- Move the Focus reference through Goal-side and Skill-side cards and confirm Focus has no connection-editing control.
 
 ### Manual Verification
 
@@ -310,8 +349,8 @@ Map or entry view
 | Separate Skill and Goal graph types | Simple initial screens | Prevents recursive mixed relationships | Rejected |
 | Shared Node with fixed category type | Easy filtering | Category becomes another rigid type boundary | Rejected |
 | Shared Node with reference-layer presentation | Supports recursive relationships and flexible views | Requires clear reference-layer UX | Provisional choice |
-| Edit relationships directly on Map | Fast access | Makes Map dense and harder to inspect | Rejected |
-| Edit relationships on Node page with selection dialog | Clear direction and recoverable actions | Requires page navigation | Provisional choice |
+| Edit relationships directly on Map | Fast access, matches "what can I aim for next" mental model | Makes Map dense and harder to inspect at large graph sizes | Selected 2026-08-30 (reverses earlier rejection) |
+| Edit relationships on Node page with selection dialog | Clear direction and recoverable actions | Requires page navigation away from the graph the user is looking at | Rejected 2026-08-30 (was provisional choice) |
 
 ## Implementation Checklist
 

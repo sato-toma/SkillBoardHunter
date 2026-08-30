@@ -1,4 +1,4 @@
-import type { Skill } from '../domain/skillBoard';
+import type { Skill, SkillStatus } from '../domain/skillBoard';
 import { SkillMap } from './SkillMap';
 import { SkillMapDetail } from './SkillMapDetail';
 
@@ -12,6 +12,7 @@ type SkillMapWorkspaceProps = {
     onMove: (id: string, x: number, y: number) => void;
     onXpChange: (skill: Skill, xp: number) => void;
     onRemovePrerequisite: (skill: Skill, prerequisiteId: string) => void;
+    onEditSave: (skill: Skill, updates: { name: string; status: SkillStatus }) => void;
 };
 
 export function SkillMapWorkspace({
@@ -24,6 +25,7 @@ export function SkillMapWorkspace({
     onMove,
     onXpChange,
     onRemovePrerequisite,
+    onEditSave,
 }: SkillMapWorkspaceProps) {
     return (
         <section className="skill-map-panel" aria-label="Skill map">
@@ -39,6 +41,7 @@ export function SkillMapWorkspace({
                 skills={skills}
                 onXpChange={onXpChange}
                 onRemovePrerequisite={onRemovePrerequisite}
+                onEditSave={onEditSave}
             />
             {errorMessage && (
                 <p role="alert" className="error-text">

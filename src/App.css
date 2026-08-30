@@ -340,6 +340,76 @@
     font-size: 23px;
 }
 
+.skill-map-edit-button {
+    justify-self: start;
+    border: 1px solid #b8c8bd;
+    background: transparent;
+    color: #173f3a;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.node-edit-overlay {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(23, 63, 58, 0.45);
+    z-index: 10;
+}
+
+.node-edit-dialog {
+    display: grid;
+    gap: 14px;
+    background: #f4f1e8;
+    border-radius: 10px;
+    padding: 22px;
+    width: min(360px, 90vw);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.node-edit-dialog h3 {
+    margin: 0;
+    color: #173f3a;
+}
+
+.node-edit-field {
+    display: grid;
+    gap: 6px;
+    font-size: 12px;
+    color: #61736c;
+}
+
+.node-edit-field input,
+.node-edit-field select {
+    font-size: 14px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #b8c8bd;
+}
+
+.node-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.node-edit-actions button {
+    border-radius: 6px;
+    padding: 6px 14px;
+    cursor: pointer;
+    border: 1px solid #b8c8bd;
+    background: transparent;
+}
+
+.node-edit-actions button.primary {
+    background: #d06443;
+    border-color: #d06443;
+    color: #fff;
+}
+
 .state-badge {
     font-size: 10px;
     font-weight: 800;
@@ -1023,24 +1093,6 @@
 .workspace-record small {
     color: #61736c;
     font-size: 12px;
-}
-
-.focus-breadcrumb {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
-    color: #61736c;
-    font-size: 13px;
-}
-
-.focus-breadcrumb button {
-    border: 0;
-    background: transparent;
-    color: #42665d;
-    text-decoration: underline;
-    cursor: pointer;
-    font: inherit;
-    padding: 0;
 }
 
 .focus-lane {

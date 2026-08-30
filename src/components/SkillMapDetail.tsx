@@ -1,10 +1,13 @@
-import { isSkillUnlocked, type Skill } from '../domain/skillBoard';
+import { useState } from 'react';
+import { isSkillUnlocked, type Skill, type SkillStatus } from '../domain/skillBoard';
+import { NodeEditPage } from './NodeEditPage';
 
 type SkillMapDetailProps = {
     selectedSkill: Skill | undefined;
     skills: Skill[];
     onXpChange: (skill: Skill, xp: number) => void;
     onRemovePrerequisite: (skill: Skill, prerequisiteId: string) => void;
+    onEditSave: (skill: Skill, updates: { name: string; status: SkillStatus }) => void;
 };
 
 export function SkillMapDetail({
@@ -12,7 +15,10 @@ export function SkillMapDetail({
     skills,
     onXpChange,
     onRemovePrerequisite,
+    onEditSave,
 }: SkillMapDetailProps) {
+    const [isEditing, setIsEditing] = useState(false);
+
     if (!selectedSkill) {
         return (
             <aside className="skill-map-detail empty">
@@ -34,6 +40,9 @@ export function SkillMapDetail({
                     {unlocked ? 'UNLOCKED' : 'LOCKED'}
                 </span>
             </div>
+            <button type="button" className="skill-map-edit-button" onClick={() => setIsEditing(true)}>
+                Edit
+            </button>
             <label className="skill-map-xp">
                 <span>{selectedSkill.xp ?? 0} XP</span>
                 <input
@@ -65,6 +74,16 @@ export function SkillMapDetail({
                     ))}
                 </ul>
             </div>
+            {isEditing && (
+                <NodeEditPage
+                    skill={selectedSkill}
+                    onCancel={() => setIsEditing(false)}
+                    onSave={(updates) => {
+                        onEditSave(selectedSkill, updates);
+                        setIsEditing(false);
+                    }}
+                />
+            )}
         </aside>
     );
 }

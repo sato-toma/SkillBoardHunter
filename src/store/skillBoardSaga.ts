@@ -27,6 +27,7 @@ import {
     skillUpdated,
     updateGoalRequested,
     updateSkillDependenciesRequested,
+    updateSkillDetailsRequested,
     updateSkillPositionRequested,
     updateSkillRequested,
 } from './skillBoardSlice';
@@ -183,6 +184,48 @@ function* handleUpdateSkillDependenciesRequested(
 
     const updatedSkill = nextBoard.skills.find((skill) => skill.id === action.payload.id);
     if (updatedSkill) yield put(skillUpdated(updatedSkill));
+}
+
+function* handleUpdateSkillDetailsRequested(
+    port: SkillBoardPersistencePort,
+    action: ReturnType<typeof updateSkillDetailsRequested>,
+): SagaIterator {
+    const normalized = normalizeSkillName(action.payload.name);
+
+    if (!normalized) {
+        yield put(persistenceFailed({ message: 'Skill名を入力してください。' }));
+        return;
+    }
+
+    const currentBoard: SkillBoard = yield select(
+        (state: SkillBoardRootState) => state.skillBoard.board,
+    );
+    const currentSkill = currentBoard.skills.find((skill) => skill.id === action.payload.id);
+
+    if (!currentSkill) return;
+
+    const updatedSkill: Skill = {
+        ...currentSkill,
+        name: normalized,
+        status: action.payload.status,
+    };
+    const nextBoard: SkillBoard = {
+        ...currentBoard,
+        skills: currentBoard.skills.map((skill) =>
+            skill.id === updatedSkill.id ? updatedSkill : skill,
+        ),
+    };
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
+
+    if (!saveResult.ok) {
+        yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
+        return;
+    }
+
+    yield put(skillUpdated(updatedSkill));
 }
 
 function* handleUpdateSkillPositionRequested(
@@ -347,6 +390,7 @@ export function* createSkillBoardSaga(port: SkillBoardPersistencePort): SagaIter
         handleUpdateSkillDependenciesRequested,
         port,
     );
+    yield takeEvery(updateSkillDetailsRequested.type, handleUpdateSkillDetailsRequested, port);
     yield takeEvery(updateSkillPositionRequested.type, handleUpdateSkillPositionRequested, port);
     yield takeEvery(loadSampleRequested.type, handleLoadSampleRequested, port);
 }
