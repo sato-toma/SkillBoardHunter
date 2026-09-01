@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { AppHeader } from './components/AppHeader';
-import { FocusView } from './components/FocusView';
 import { GoalStatus } from './components/GoalStatus';
 import { GoalsView } from './components/GoalsView';
 import { SkillDeck } from './components/SkillDeck';
@@ -91,6 +90,7 @@ function App() {
             {activeView === 'map' && (
                 <SkillMapWorkspace
                     skills={skills}
+                    goals={board.goals ?? []}
                     selectedSkillId={selectedSkillId}
                     selectedSkill={selectedSkill}
                     errorMessage={errorMessage}
@@ -136,7 +136,6 @@ function App() {
                 />
             )}
             {activeView === 'goals' && <GoalsView goals={board.goals ?? []} />}
-            {activeView === 'focus' && <FocusView skills={skills} goals={board.goals ?? []} />}
         </main>
     );
 }

@@ -101,6 +101,62 @@
 - Related design/ADR: `docs/detailed-design-mvp-1-board-experience.md`
 - Resolution and validation:
 
+### TI-0007: Map discovery drilling interaction model
+
+- Status: Resolved
+- Discovered: 2026-09-01
+- Context: Map and Focus roles were reassigned. Map is now the discovery/search surface: from a
+  selected skill, the user should be able to drill outward one hop at a time, in either
+  direction (toward Goals/abstraction, toward detail/sub-skills). No interaction had been
+  prototyped yet.
+- Impact: Drilling is a graph interaction with more than one plausible operation model
+  (highlight-in-place vs. expanding subgraph), and it must not conflict with Map's existing
+  click-to-select / click-to-connect gesture. Building it without validation risked a confusing
+  or unusable search experience, which is the exact problem this reassignment was meant to fix.
+- Current understanding: Resolved through iterative prototyping. See resolution below.
+- Options considered:
+	- A. Highlight an expanding ego-network inside the existing full graph (dim unrelated nodes)
+	- B. Open a separate expanding local subgraph view anchored on the selected skill
+	- C. Something else, to be discovered while prototyping
+- Next action: None for this issue. Follow-up on the click-gesture conflict is tracked in
+  TI-0008.
+- Revisit when: N/A, resolved.
+- Related design/ADR: `docs/detailed-design-mvp-1-board-experience.md`
+- Resolution and validation: User tried both prototypes and preferred A's overall shape, then
+  asked for several refinements applied directly to it: lazy reveal (only actually-revealed
+  nodes are laid out, borrowed from B), automatic sibling reveal with dashed styling, a richer
+  multi-hop sample dataset, removing the dropdown starting-skill picker in favor of an
+  always-present active skill set by clicking a node, and scroll compensation so the active
+  skill never visually shifts on screen. Confirmed 2026-09-01. Recorded in
+  `docs/detailed-design-mvp-1-board-experience.md` under "Interaction Validation: Map discovery
+  drilling". Validated manually via
+  `prototypes/map-discovery-drilling/prototype-a-highlight-in-graph.html`; production
+  implementation still needs an automated component/functional test.
+
+### TI-0008: Discovery click-to-recenter conflicts with Map's click-to-link gesture
+
+- Status: Open
+- Discovered: 2026-09-01
+- Context: The confirmed discovery interaction (TI-0007) uses a plain click on any revealed node
+  to make it the new active skill. Map's existing editing gesture also uses a plain click to
+  select a link source, then a second click on another node to connect them. Both cannot own a
+  plain node click at the same time.
+- Impact: Implementing discovery drilling into the real Map component without resolving this
+  will make one of the two gestures unreliable or surprising.
+- Current understanding: Not yet decided. Needs its own small interaction check, since this
+  question was out of scope for the discovery-only prototype.
+- Options considered:
+	- A. A separate mode toggle switches Map between "discovery" and "edit connections"
+	- B. A distinct control (for example a small link icon on a node) starts linking, leaving a
+	  plain click free for recentering
+	- C. Recentering uses a different trigger (for example double-click) than link-source
+	  selection
+- Next action: Prototype at least two of these options and confirm with the user before
+  implementing discovery drilling in the production Map component.
+- Revisit when: Before Map discovery drilling implementation starts.
+- Related design/ADR: `docs/detailed-design-mvp-1-board-experience.md`
+- Resolution and validation:
+
 ### TI-0006: Goal起点ボードの進捗定義と表示ルール
 
 - Status: Open
