@@ -21,6 +21,7 @@
 
 - For a feature, create or update a detailed design document using `docs/detailed-design-template.md` before implementation when the behavior crosses a module boundary or changes persisted data.
 - Describe implementation boundaries, data flow, error handling, platform differences, acceptance criteria, and test cases.
+- Delegate mechanical validation work to a low-cost AI model when delegation is available. This includes running and reporting `test`, `lint`, `format:check`, `check`, and `typecheck`; reserve more capable models for product decisions, design, implementation, debugging, and interpreting failures.
 - Add focused tests for new behavior. Prefer domain tests for business rules and component tests for user-visible behavior.
 - Keep Implementation, Unit Test, and Functional Test as separate phases and report them separately.
 - Add focused unit tests for domain rules, state transitions, serialization, and adapters. Use component or integration tests for user-visible flows.

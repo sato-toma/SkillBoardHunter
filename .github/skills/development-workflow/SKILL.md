@@ -18,11 +18,12 @@ Use this Skill to coordinate the complete workflow. Delegate detailed planning t
 5. Run Detailed Design using `docs/detailed-design-template.md`. Do not write production code until the design gate is satisfied.
 6. Record architecture alternatives and trade-offs in the design document. Add an ADR when the decision changes the technology or architecture.
 7. Run Implementation according to the approved design. Record any design deviation and its reason.
-8. Immediately run the narrowest available typecheck, lint, build, or focused executable check after implementation.
-9. Run Unit Test for domain logic, state transitions, serialization, adapters, invalid input, and error handling.
-10. Run Functional Test for the user flow, acceptance criteria, UI behavior, persistence/reload behavior, and relevant platform boundaries.
-11. Record failed checks, unverified risks, environment constraints, and follow-up actions in `docs/technical-issues.md`.
-12. Report each phase separately with its status, evidence, remaining risks, and open questions.
+8. Delegate mechanical validation to a low-cost AI model when delegation is available. This includes `test`, `lint`, `format:check`, `check`, and `typecheck`; use a more capable model to debug or interpret validation failures.
+9. Immediately run the narrowest available typecheck, lint, build, or focused executable check after implementation.
+10. Run Unit Test for domain logic, state transitions, serialization, adapters, invalid input, and error handling.
+11. Run Functional Test for the user flow, acceptance criteria, UI behavior, persistence/reload behavior, and relevant platform boundaries.
+12. Record failed checks, unverified risks, environment constraints, and follow-up actions in `docs/technical-issues.md`.
+13. Report each phase separately with its status, evidence, remaining risks, and open questions.
 
 ## Phase Gates
 
