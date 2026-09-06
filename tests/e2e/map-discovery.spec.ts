@@ -22,3 +22,14 @@ test('opens Discovery and recenters around a revealed skill', async ({ page }) =
     ).toBeVisible();
     await expect(page.getByRole('button', { name: 'React' })).toBeVisible();
 });
+
+test('restores the sample board after a reload', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Load sample' }).click();
+    await expect(page.getByRole('heading', { name: 'Ship a useful product' })).toBeVisible();
+
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: 'Ship a useful product' })).toBeVisible();
+    await expect(page.getByText('4 in library')).toBeVisible();
+});

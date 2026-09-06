@@ -11,9 +11,9 @@ Draft
 | Plan | Revised 2026-09-01 |
 | Change scope | Revised 2026-09-06 |
 | Detailed design | Board zoom interaction confirmed 2026-09-06 |
-| Implementation | Partial, discovery drilling not yet built |
-| Unit test | In progress |
-| Functional test | Not started |
+| Implementation | Partial, Discovery drilling implemented |
+| Unit test | Discovery slice complete |
+| Functional test | Discovery and reload flow in progress |
 
 ## Goal
 
@@ -175,11 +175,10 @@ The current design is considered valid only if:
     the sense of the wider graph while searching.
   - Dropdown-based "choose a different start": rejected, does not match the mental model of an
     always-present active skill that Map itself should be able to set.
-- Verification method: manual interaction test using
-  `prototypes/map-discovery-drilling/prototype-a-highlight-in-graph.html`. Production
-  implementation needs a component/functional test covering: pick active skill -> immediate
-  neighbors shown -> expand up/down -> siblings appear -> recenter on a revealed node -> active
-  skill position stable across expands.
+- Verification method: component test and Playwright functional test covering: pick active skill
+  -> immediate neighbors shown -> expand up/down -> siblings appear -> recenter on a revealed node
+  -> active skill position stable across expands. The current functional test is
+  `tests/e2e/map-discovery.spec.ts`.
 
 ## Interaction Validation: Board wheel zoom
 
@@ -204,10 +203,12 @@ The current design is considered valid only if:
 
 ## Implementation status
 
-- Map currently implements the full-graph view and direct editing, but not hop-by-hop discovery
-  drilling. This is new work, pending interaction-validation prototypes.
+- Map currently implements the full-graph view and direct editing. Discovery also implements
+  hop-by-hop drilling with cumulative reveal, sibling styling, and recentering.
 - Focus currently implements the local neighbor view; it needs to be reframed as a roadmap
   segment (wording/framing change) but its read-only, single-hop behavior already matches the
   confirmed model.
 - Node edit page for basic fields is implemented.
 - A full unified Node model is not yet implemented.
+- Browser verification covers opening Discovery, recentering, and restoring the sample board
+  after reload. Deeper sibling and multi-hop fixtures still need broader functional coverage.
