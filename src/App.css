@@ -333,6 +333,7 @@
 .skill-map-link-handle {
     position: absolute;
     z-index: 3;
+    padding: 0;
     width: 14px;
     height: 14px;
     transform: translate(-50%, -50%);
@@ -348,8 +349,10 @@
 }
 
 .skill-map-link-handle {
+    margin: 0;
     border-color: #83c8eb;
     background: #83c8eb;
+    pointer-events: auto;
 }
 
 .skill-map-edges .link-preview {

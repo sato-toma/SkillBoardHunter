@@ -44,8 +44,10 @@ export function SkillMap({
     onDeleteLink,
 }: SkillMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const linkDragCleanupRef = useRef<(() => void) | null>(null);
     const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
     const [linkEditMode, setLinkEditMode] = useState(false);
+    const [linkStatus, setLinkStatus] = useState<string | null>(null);
     const [dragPreview, setDragPreview] = useState<{
         id: string;
         x: number;
@@ -142,28 +144,30 @@ export function SkillMap({
     );
 
     const startLinkDrag = (
-        event: React.PointerEvent<HTMLElement>,
+        event: React.PointerEvent<HTMLElement> | React.MouseEvent<HTMLElement>,
         fromId: string,
         oldToId: string | null,
     ) => {
         event.preventDefault();
         event.stopPropagation();
         const point = toLocalPoint(event.clientX, event.clientY);
+        setLinkStatus(
+            oldToId
+                ? 'Move the blue link handle to another node or empty space.'
+                : 'Drag the gold port to another node.',
+        );
         setLinkDrag({ fromId, oldToId, x: point.x, y: point.y, targetId: null });
-    };
 
-    useEffect(() => {
-        if (!linkDrag) return;
-
-        const handleMove = (event: PointerEvent) => {
-            const point = toLocalPoint(event.clientX, event.clientY);
-            const target = findNodeAt(point.x, point.y);
+        linkDragCleanupRef.current?.();
+        const handleMove = (moveEvent: PointerEvent) => {
+            const nextPoint = toLocalPoint(moveEvent.clientX, moveEvent.clientY);
+            const target = findNodeAt(nextPoint.x, nextPoint.y);
             setLinkDrag((current) =>
                 current
                     ? {
                           ...current,
-                          x: point.x,
-                          y: point.y,
+                          x: nextPoint.x,
+                          y: nextPoint.y,
                           targetId: target && target.id !== current.fromId ? target.id : null,
                       }
                     : null,
@@ -173,6 +177,7 @@ export function SkillMap({
             setLinkDrag((current) => {
                 if (!current) return null;
                 if (current.targetId) {
+                    setLinkStatus(current.oldToId ? 'Link relinked.' : 'Link created.');
                     if (current.oldToId) {
                         if (current.oldToId !== current.targetId) {
                             onRelinkLink(current.fromId, current.oldToId, current.targetId);
@@ -181,18 +186,32 @@ export function SkillMap({
                         onCreateLink(current.fromId, current.targetId);
                     }
                 } else if (current.oldToId) {
+                    setLinkStatus('Link deleted.');
                     onDeleteLink(current.fromId, current.oldToId);
+                } else {
+                    setLinkStatus('Link creation cancelled.');
                 }
                 return null;
             });
+            linkDragCleanupRef.current?.();
         };
-        window.addEventListener('pointermove', handleMove);
-        window.addEventListener('pointerup', handleUp, { once: true });
-        return () => {
-            window.removeEventListener('pointermove', handleMove);
-            window.removeEventListener('pointerup', handleUp);
+        const handleMouseMove = (event: MouseEvent) => handleMove(event as PointerEvent);
+        linkDragCleanupRef.current = () => {
+            document.removeEventListener('pointermove', handleMove, true);
+            document.removeEventListener('pointerup', handleUp, true);
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleUp);
+            linkDragCleanupRef.current = null;
         };
-    }, [findNodeAt, linkDrag, onCreateLink, onDeleteLink, onRelinkLink, toLocalPoint]);
+        document.addEventListener('pointermove', handleMove, true);
+        document.addEventListener('pointerup', handleUp, { once: true, capture: true });
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleUp, { once: true });
+    };
+
+    useEffect(() => {
+        return () => linkDragCleanupRef.current?.();
+    }, []);
 
     const edges = links
         .map((link) => ({
@@ -233,6 +252,7 @@ export function SkillMap({
 
     const toggleLinkEditMode = () => {
         setLinkDrag(null);
+        setLinkStatus(null);
         setLinkEditMode((current) => !current);
     };
 
@@ -281,6 +301,7 @@ export function SkillMap({
                         ? 'Drag the small gold square to create a link. Drag a blue link end to another node to relink, or to empty space to delete.'
                         : 'Click a Skill to select it. Edit it in the detail panel, or drag it to reposition.'}
                 </span>
+                {linkStatus && <span className="skill-map-link-status">{linkStatus}</span>}
             </div>
             <div className="skill-map-canvas" ref={containerRef}>
                 <div
@@ -362,30 +383,38 @@ export function SkillMap({
                                             {skill.xp ?? 0} XP
                                         </span>
                                     )}
-                                    {linkEditMode && node.kind === 'skill' && (
-                                        <span
-                                            className="skill-map-link-port"
-                                            title="Drag to create a link"
-                                            onPointerDown={(event) =>
-                                                startLinkDrag(event, node.id, null)
-                                            }
-                                        />
-                                    )}
                                 </button>
+                                {linkEditMode && node.kind === 'skill' && (
+                                    <button
+                                        type="button"
+                                        className="skill-map-link-port"
+                                        title="Drag to create a link"
+                                        aria-label={`Create link from ${node.name}`}
+                                        onPointerDown={(event) =>
+                                            startLinkDrag(event, node.id, null)
+                                        }
+                                        onMouseDown={(event) => startLinkDrag(event, node.id, null)}
+                                    />
+                                )}
                             </div>
                         );
                     })}
                     {linkEditMode &&
                         edges.map((edge) => (
-                            <span
+                            <button
+                                type="button"
                                 className="skill-map-link-handle"
                                 key={`${edge.link.fromId}-${edge.link.toId}`}
                                 title="Drag to relink or delete"
+                                aria-label={`Link from ${edge.from.name} to ${edge.to.name}`}
                                 style={{
                                     left: `${(edge.to.x / MAP_WIDTH) * 100}%`,
                                     top: `${(edge.to.y / MAP_HEIGHT) * 100}%`,
                                 }}
                                 onPointerDown={(event) =>
+                                    startLinkDrag(event, edge.link.fromId, edge.link.toId)
+                                }
+                                onMouseDown={(event) =>
                                     startLinkDrag(event, edge.link.fromId, edge.link.toId)
                                 }
                             />
