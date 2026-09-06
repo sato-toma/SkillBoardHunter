@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { discoverAround, type DiscoveryNode } from '../domain/mapDiscovery';
+import { type DiscoveryNode, discoverAround } from '../domain/mapDiscovery';
 import { defaultFocusNodeId, type Goal, type Skill } from '../domain/skillBoard';
 
 type MapDiscoveryViewProps = {

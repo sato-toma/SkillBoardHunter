@@ -20,7 +20,9 @@ describe('MapDiscoveryView', () => {
             />,
         );
 
-        expect(screen.getByRole('heading', { name: 'Search Skills related to React.' })).toBeTruthy();
+        expect(
+            screen.getByRole('heading', { name: 'Search Skills related to React.' }),
+        ).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Product UI' })).toBeTruthy();
         expect(screen.queryByRole('button', { name: 'Ship v1' })).toBeNull();
 

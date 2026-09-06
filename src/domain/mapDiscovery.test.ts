@@ -15,7 +15,9 @@ const goals: Goal[] = [{ id: 'ship-v1', title: 'Ship v1', requiredSkillIds: ['ui
 describe('discoverAround', () => {
     it('reveals only the active node with zero hops', () => {
         const view = discoverAround('react', skills, goals, 0, 0);
-        expect(view.nodes).toEqual([{ id: 'react', name: 'React', kind: 'skill', band: 0, role: 'center' }]);
+        expect(view.nodes).toEqual([
+            { id: 'react', name: 'React', kind: 'skill', band: 0, role: 'center' },
+        ]);
         expect(view.edges).toEqual([]);
     });
 

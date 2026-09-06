@@ -124,7 +124,8 @@ export const discoverAround = (
         const isSibling =
             !isPath &&
             ((siblingUpIds.has(childId) && (parentId === centerId || upLevels.has(parentId))) ||
-                (siblingDownIds.has(parentId) && (childId === centerId || downLevels.has(childId))));
+                (siblingDownIds.has(parentId) &&
+                    (childId === centerId || downLevels.has(childId))));
         edges.push({ childId, parentId, kind: isPath ? 'path' : isSibling ? 'sibling' : 'other' });
     };
     for (const skill of skills) {
