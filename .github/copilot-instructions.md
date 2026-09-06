@@ -48,4 +48,5 @@
 - Prefer existing project patterns over new abstractions.
 - Avoid adding comments unless they explain non-obvious behavior.
 - Use clear, simple English for all `docs/` documentation, source-code comments, and commit messages unless the user explicitly requests another language. Write commit messages so they are understandable to a high school student.
+- Treat files under `prototypes/` as disposable validation artifacts. Do not stage or commit them unless the user explicitly asks; report their workspace-relative file paths so the user can open them directly.
 - Do not commit or create branches unless explicitly requested.

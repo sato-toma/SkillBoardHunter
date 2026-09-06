@@ -72,6 +72,16 @@ The previous model (Map = editing surface, Focus = generic local inspection) is 
 - Opened explicitly from the selected node panel.
 - Not used for graph relationships.
 
+### Node interaction boundary
+
+- Discovery node visuals use the card-like treatment from Prototype B.
+- Clicking the node body only changes the active Discovery center and resets the immediate
+  neighborhood.
+- Node editing is entered through a separate edit action in the selected-node detail panel. A
+  node click never opens or changes node fields.
+- Relationship editing is not triggered by a normal node click. It remains a separate operation
+  with an explicit entry point.
+
 ## Scope
 
 ### In scope
@@ -145,6 +155,9 @@ The current design is considered valid only if:
     skill for this view).
   - The active skill's vertical screen position is kept stable: centered in view on first pick,
     and scroll is compensated on every expand so it never jumps.
+- Node interaction decision: keep cumulative discovery behavior, but use Prototype B's card-like
+  node visual. A node-body click only recenters Discovery; node editing and relationship editing
+  use separate explicit operations.
 - Core action sequence: pick/click a skill to make it active -> immediate parent(s)/child(ren)
   appear automatically -> press Expand toward Goals/Detail to reveal one more hop at a time,
   cumulatively -> click any revealed node (path or sibling) to make it the new active skill,

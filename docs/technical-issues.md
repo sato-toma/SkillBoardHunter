@@ -135,7 +135,7 @@
 
 ### TI-0008: Discovery click-to-recenter conflicts with Map's click-to-link gesture
 
-- Status: Open
+- Status: Resolved
 - Discovered: 2026-09-01
 - Context: The confirmed discovery interaction (TI-0007) uses a plain click on any revealed node
   to make it the new active skill. Map's existing editing gesture also uses a plain click to
@@ -143,19 +143,24 @@
   plain node click at the same time.
 - Impact: Implementing discovery drilling into the real Map component without resolving this
   will make one of the two gestures unreliable or surprising.
-- Current understanding: Not yet decided. Needs its own small interaction check, since this
-  question was out of scope for the discovery-only prototype.
+- Current understanding: The user selected the Discovery-first model. A node-body click only
+  changes the active Discovery center. Node editing is entered through the selected-node detail
+  panel, and relationship editing must use a separate explicit operation rather than sharing the
+  normal node click.
 - Options considered:
 	- A. A separate mode toggle switches Map between "discovery" and "edit connections"
 	- B. A distinct control (for example a small link icon on a node) starts linking, leaving a
 	  plain click free for recentering
 	- C. Recentering uses a different trigger (for example double-click) than link-source
 	  selection
-- Next action: Prototype at least two of these options and confirm with the user before
-  implementing discovery drilling in the production Map component.
-- Revisit when: Before Map discovery drilling implementation starts.
+- Next action: Keep relationship editing behind an explicit control when it is implemented on the
+  Discovery surface.
+- Revisit when: Relationship editing is moved into or redesigned for Discovery.
 - Related design/ADR: `docs/detailed-design-mvp-1-board-experience.md`
-- Resolution and validation:
+- Resolution and validation: The user tried the two click-gesture prototypes and chose the
+  Discovery-first behavior. Prototype B's card-like node visual was preferred, but its normal
+  click-to-link behavior was rejected. Confirmed 2026-09-06. Prototype files remain disposable
+  validation artifacts and are not to be staged or committed.
 
 ### TI-0006: Goal起点ボードの進捗定義と表示ルール
 
