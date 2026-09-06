@@ -7,6 +7,7 @@ import {
     type Quest,
     type Skill,
     type SkillBoard,
+    type SkillNote,
     type SkillStatus,
 } from '../domain/skillBoard';
 
@@ -66,6 +67,7 @@ const skillBoardSlice = createSlice({
                 id: string;
                 name: string;
                 status: SkillStatus;
+                notes: SkillNote[];
             }>,
         ) => undefined,
         updateSkillPositionRequested: (

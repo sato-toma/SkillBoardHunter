@@ -1,12 +1,25 @@
 export type Skill = {
     id: string;
     name: string;
+    notes?: SkillNote[];
     prerequisiteSkillIds?: string[];
     xp?: number;
     level?: SkillLevel;
     status?: SkillStatus;
     layoutX?: number;
     layoutY?: number;
+};
+
+export type SkillNoteLink = {
+    id: string;
+    label: string;
+    url: string;
+};
+
+export type SkillNote = {
+    id: string;
+    content: string;
+    links: SkillNoteLink[];
 };
 
 export type SkillLevel = 1 | 2 | 3 | 4 | 5;
@@ -115,6 +128,37 @@ export const sampleSkillBoard = (): SkillBoard => ({
 });
 
 export const normalizeSkillName = (value: string): string => value.trim();
+
+const isExternalUrl = (value: string) => {
+    try {
+        const url = new URL(value);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+        return false;
+    }
+};
+
+export const normalizeSkillNotes = (notes: SkillNote[]): SkillNote[] | null => {
+    const normalized = notes.map((note) => ({
+        ...note,
+        content: note.content.trim(),
+        links: note.links.map((link) => ({
+            ...link,
+            label: link.label.trim(),
+            url: link.url.trim(),
+        })),
+    }));
+
+    const hasInvalidContent = normalized.some((note) => !note.id || !note.content);
+    const hasInvalidLink = normalized.some((note) =>
+        note.links.some((link) => {
+            if (!link.id || !link.label || !link.url) return true;
+            return !isExternalUrl(link.url);
+        }),
+    );
+
+    return hasInvalidContent || hasInvalidLink ? null : normalized;
+};
 
 export const normalizeXp = (value: number): number => Math.min(100, Math.max(0, Math.round(value)));
 
@@ -310,13 +354,35 @@ export const isSkillBoard = (value: unknown): value is SkillBoard => {
         const maybeSkill = skill as {
             id?: unknown;
             name?: unknown;
+            notes?: unknown;
             xp?: unknown;
             level?: unknown;
             status?: unknown;
         };
+        const notes = maybeSkill.notes;
+        const notesAreValid =
+            notes === undefined ||
+            (Array.isArray(notes) &&
+                notes.every(
+                    (note) =>
+                        note &&
+                        typeof note === 'object' &&
+                        typeof (note as SkillNote).id === 'string' &&
+                        typeof (note as SkillNote).content === 'string' &&
+                        Array.isArray((note as SkillNote).links) &&
+                        (note as SkillNote).links.every(
+                            (link) =>
+                                link &&
+                                typeof link.id === 'string' &&
+                                typeof link.label === 'string' &&
+                                typeof link.url === 'string' &&
+                                isExternalUrl(link.url),
+                        ),
+                ));
         return (
             typeof maybeSkill.id === 'string' &&
             typeof maybeSkill.name === 'string' &&
+            notesAreValid &&
             (maybeSkill.xp === undefined ||
                 (typeof maybeSkill.xp === 'number' && Number.isFinite(maybeSkill.xp))) &&
             (maybeSkill.level === undefined ||

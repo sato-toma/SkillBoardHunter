@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { fallbackSkillLayout, isSkillUnlocked, type Skill, skillVisibility } from './skillBoard';
+import {
+    fallbackSkillLayout,
+    isSkillBoard,
+    isSkillUnlocked,
+    normalizeSkillNotes,
+    type Skill,
+    skillVisibility,
+} from './skillBoard';
 
 const skills: Skill[] = [
     { id: 'root', name: 'Root', xp: 80 },
@@ -22,5 +29,57 @@ describe('skill map rules', () => {
 
         expect(first).toEqual(second);
         expect(deeper).not.toEqual(first);
+    });
+
+    it('accepts labelled HTTP links attached to a note', () => {
+        expect(
+            normalizeSkillNotes([
+                {
+                    id: 'note-1',
+                    content: ' Shipped a feature. ',
+                    links: [
+                        { id: 'link-1', label: ' GitHub ', url: ' https://github.com/example ' },
+                    ],
+                },
+            ]),
+        ).toEqual([
+            {
+                id: 'note-1',
+                content: 'Shipped a feature.',
+                links: [{ id: 'link-1', label: 'GitHub', url: 'https://github.com/example' }],
+            },
+        ]);
+        expect(
+            normalizeSkillNotes([
+                {
+                    id: 'note-1',
+                    content: 'Proof',
+                    links: [{ id: 'link-1', label: 'X', url: 'ftp://x.com' }],
+                },
+            ]),
+        ).toBeNull();
+    });
+
+    it('rejects persisted notes with non-HTTP external links', () => {
+        expect(
+            isSkillBoard({
+                version: 1,
+                skills: [
+                    {
+                        id: 'react',
+                        name: 'React',
+                        notes: [
+                            {
+                                id: 'note-1',
+                                content: 'Proof',
+                                links: [
+                                    { id: 'link-1', label: 'Unsafe', url: 'javascript:alert(1)' },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            }),
+        ).toBe(false);
     });
 });

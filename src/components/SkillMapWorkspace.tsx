@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Goal, Skill, SkillStatus } from '../domain/skillBoard';
+import type { Goal, Skill, SkillNote, SkillStatus } from '../domain/skillBoard';
 import { MapDiscoveryView } from './MapDiscoveryView';
 import { SkillMap } from './SkillMap';
 import { SkillMapDetail } from './SkillMapDetail';
@@ -17,7 +17,10 @@ type SkillMapWorkspaceProps = {
     onMove: (id: string, x: number, y: number) => void;
     onXpChange: (skill: Skill, xp: number) => void;
     onRemovePrerequisite: (skill: Skill, prerequisiteId: string) => void;
-    onEditSave: (skill: Skill, updates: { name: string; status: SkillStatus }) => void;
+    onEditSave: (
+        skill: Skill,
+        updates: { name: string; status: SkillStatus; notes: SkillNote[] },
+    ) => void;
 };
 
 export function SkillMapWorkspace({
@@ -67,6 +70,7 @@ export function SkillMapWorkspace({
                     <SkillMapDetail
                         selectedSkill={selectedSkill}
                         skills={skills}
+                        goals={goals}
                         onXpChange={onXpChange}
                         onRemovePrerequisite={onRemovePrerequisite}
                         onEditSave={onEditSave}

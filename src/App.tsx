@@ -130,6 +130,7 @@ function App() {
                                 id: skill.id,
                                 name: updates.name,
                                 status: updates.status,
+                                notes: updates.notes,
                             }),
                         )
                     }

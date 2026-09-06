@@ -4,6 +4,7 @@ import type { SkillBoardPersistencePort } from '../application/skillBoardPersist
 import {
     levelFromXp,
     normalizeSkillName,
+    normalizeSkillNotes,
     normalizeXp,
     type Skill,
     type SkillBoard,
@@ -197,6 +198,12 @@ function* handleUpdateSkillDetailsRequested(
         return;
     }
 
+    const notes = normalizeSkillNotes(action.payload.notes);
+    if (!notes) {
+        yield put(persistenceFailed({ message: 'NoteとLinkを入力してください。' }));
+        return;
+    }
+
     const currentBoard: SkillBoard = yield select(
         (state: SkillBoardRootState) => state.skillBoard.board,
     );
@@ -208,6 +215,7 @@ function* handleUpdateSkillDetailsRequested(
         ...currentSkill,
         name: normalized,
         status: action.payload.status,
+        notes,
     };
     const nextBoard: SkillBoard = {
         ...currentBoard,

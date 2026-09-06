@@ -387,6 +387,8 @@
     border-radius: 10px;
     padding: 22px;
     width: min(360px, 90vw);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
@@ -403,11 +405,64 @@
 }
 
 .node-edit-field input,
-.node-edit-field select {
+.node-edit-field select,
+.node-edit-note textarea,
+.node-edit-link input {
     font-size: 14px;
     padding: 6px 8px;
     border-radius: 6px;
     border: 1px solid #b8c8bd;
+}
+
+.node-edit-notes,
+.node-edit-note,
+.node-edit-link,
+.skill-map-notes,
+.skill-map-related,
+.skill-map-progress {
+    display: grid;
+    gap: 8px;
+}
+
+.node-edit-notes > span,
+.skill-map-label {
+    color: #61736c;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.node-edit-note {
+    border-top: 1px solid #b8c8bd;
+    padding-top: 10px;
+}
+
+.node-edit-note textarea {
+    min-height: 72px;
+    resize: vertical;
+}
+
+.node-edit-link {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+}
+
+.node-edit-notes button,
+.node-edit-note button {
+    justify-self: start;
+    border: 1px solid #b8c8bd;
+    background: transparent;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.skill-map-notes article {
+    border-top: 1px solid #d8dfd7;
+    padding-top: 8px;
+}
+
+.skill-map-notes p,
+.skill-map-notes ul,
+.skill-map-related ul {
+    margin: 0;
 }
 
 .node-edit-actions {

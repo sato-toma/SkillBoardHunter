@@ -1,10 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type {
     PersistenceError,
     Result,
     SkillBoardPersistencePort,
 } from '../application/skillBoardPersistencePort';
-import { addSkillRequested, appStarted } from './skillBoardSlice';
+import {
+    addSkillRequested,
+    appStarted,
+    boardLoaded,
+    updateSkillDetailsRequested,
+} from './skillBoardSlice';
 import { createAppStore } from './store';
 
 const flushSaga = async () => {
@@ -57,5 +62,62 @@ describe('skillBoardSaga', () => {
         const state = store.getState().skillBoard;
         expect(state.board.skills).toHaveLength(0);
         expect(state.errorMessage).toContain('失敗');
+    });
+
+    it('persists notes and their links before updating a skill', async () => {
+        const save = vi.fn(async () => ({ ok: true as const, value: undefined }));
+        const port: SkillBoardPersistencePort = {
+            load: async () => ({ ok: true, value: { version: 1, skills: [] } }),
+            save,
+            clear: async () => ({ ok: true, value: undefined }),
+        };
+        const store = createAppStore(port);
+        store.dispatch(boardLoaded({ version: 1, skills: [{ id: 'react', name: 'React' }] }));
+        store.dispatch(
+            updateSkillDetailsRequested({
+                id: 'react',
+                name: 'React',
+                status: 'practicing',
+                notes: [
+                    {
+                        id: 'note-1',
+                        content: 'Built a feature.',
+                        links: [
+                            {
+                                id: 'link-1',
+                                label: 'Pull request',
+                                url: 'https://github.com/example/project/pull/1',
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
+        await flushSaga();
+
+        expect(save).toHaveBeenCalledWith({
+            version: 1,
+            skills: [
+                {
+                    id: 'react',
+                    name: 'React',
+                    status: 'practicing',
+                    notes: [
+                        {
+                            id: 'note-1',
+                            content: 'Built a feature.',
+                            links: [
+                                {
+                                    id: 'link-1',
+                                    label: 'Pull request',
+                                    url: 'https://github.com/example/project/pull/1',
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        expect(store.getState().skillBoard.board.skills[0]?.notes?.[0]?.links).toHaveLength(1);
     });
 });
