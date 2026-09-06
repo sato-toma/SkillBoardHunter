@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { fallbackSkillLayout, type Skill, skillVisibility } from '../domain/skillBoard';
 
 type SkillMapProps = {
@@ -11,6 +11,10 @@ type SkillMapProps = {
 
 const MAP_WIDTH = 920;
 const MAP_HEIGHT = 520;
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2.5;
+const ZOOM_STEP = 1.12;
+const roundViewportCoordinate = (value: number) => Math.round(value * 1000) / 1000;
 
 export function SkillMap({
     skills,
@@ -21,6 +25,7 @@ export function SkillMap({
 }: SkillMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [linkSourceId, setLinkSourceId] = useState<string | null>(null);
+    const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
     const [dragPreview, setDragPreview] = useState<{
         id: string;
         x: number;
@@ -56,10 +61,50 @@ export function SkillMap({
         const bounds = containerRef.current?.getBoundingClientRect();
         if (!bounds) return { x: clientX, y: clientY };
         return {
-            x: Math.round(((clientX - bounds.left) / bounds.width) * MAP_WIDTH),
-            y: Math.round(((clientY - bounds.top) / bounds.height) * MAP_HEIGHT),
+            x: Math.round(
+                ((clientX - bounds.left - viewport.x) / (bounds.width * viewport.scale)) *
+                    MAP_WIDTH,
+            ),
+            y: Math.round(
+                ((clientY - bounds.top - viewport.y) / (bounds.height * viewport.scale)) *
+                    MAP_HEIGHT,
+            ),
         };
     };
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleWheel = (event: WheelEvent) => {
+            if (event.deltaY === 0) return;
+
+            event.preventDefault();
+            const bounds = container.getBoundingClientRect();
+            const pointerX = event.clientX - bounds.left;
+            const pointerY = event.clientY - bounds.top;
+
+            setViewport((current) => {
+                const nextScale = Math.min(
+                    MAX_ZOOM,
+                    Math.max(
+                        MIN_ZOOM,
+                        current.scale * (event.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP),
+                    ),
+                );
+                const scaleRatio = nextScale / current.scale;
+
+                return {
+                    scale: nextScale,
+                    x: roundViewportCoordinate(pointerX - (pointerX - current.x) * scaleRatio),
+                    y: roundViewportCoordinate(pointerY - (pointerY - current.y) * scaleRatio),
+                };
+            });
+        };
+
+        container.addEventListener('wheel', handleWheel, { passive: false });
+        return () => container.removeEventListener('wheel', handleWheel);
+    }, []);
 
     const handlePointerDown =
         (skillId: string) => (event: React.PointerEvent<HTMLButtonElement>) => {
@@ -111,47 +156,54 @@ export function SkillMap({
                     : 'Click a Skill to select it, then click a second Skill to connect them. Drag to reposition.'}
             </div>
             <div className="skill-map-canvas" ref={containerRef}>
-                <svg
-                    className="skill-map-edges"
-                    viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-                    preserveAspectRatio="none"
-                    aria-hidden="true"
+                <div
+                    className="skill-map-world"
+                    style={{
+                        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`,
+                    }}
                 >
-                    {edges.map(({ from, to }) => (
-                        <line
-                            key={`${from.skill.id}-${to.skill.id}`}
-                            x1={from.x}
-                            y1={from.y}
-                            x2={to.x}
-                            y2={to.y}
-                        />
-                    ))}
-                </svg>
-                {visible.map(({ skill, x, y, visibility }) => (
-                    <button
-                        type="button"
-                        key={skill.id}
-                        className={[
-                            'skill-map-node',
-                            `visibility-${visibility}`,
-                            selectedSkillId === skill.id ? 'selected' : '',
-                            linkSourceId === skill.id ? 'linking' : '',
-                        ]
-                            .filter(Boolean)
-                            .join(' ')}
-                        style={{
-                            left: `${(x / MAP_WIDTH) * 100}%`,
-                            top: `${(y / MAP_HEIGHT) * 100}%`,
-                        }}
-                        onPointerDown={handlePointerDown(skill.id)}
-                        aria-pressed={selectedSkillId === skill.id}
+                    <svg
+                        className="skill-map-edges"
+                        viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
                     >
-                        <span className="skill-map-node-name">{skill.name}</span>
-                        {visibility === 'unlocked' && (
-                            <span className="skill-map-node-xp">{skill.xp ?? 0} XP</span>
-                        )}
-                    </button>
-                ))}
+                        {edges.map(({ from, to }) => (
+                            <line
+                                key={`${from.skill.id}-${to.skill.id}`}
+                                x1={from.x}
+                                y1={from.y}
+                                x2={to.x}
+                                y2={to.y}
+                            />
+                        ))}
+                    </svg>
+                    {visible.map(({ skill, x, y, visibility }) => (
+                        <button
+                            type="button"
+                            key={skill.id}
+                            className={[
+                                'skill-map-node',
+                                `visibility-${visibility}`,
+                                selectedSkillId === skill.id ? 'selected' : '',
+                                linkSourceId === skill.id ? 'linking' : '',
+                            ]
+                                .filter(Boolean)
+                                .join(' ')}
+                            style={{
+                                left: `${(x / MAP_WIDTH) * 100}%`,
+                                top: `${(y / MAP_HEIGHT) * 100}%`,
+                            }}
+                            onPointerDown={handlePointerDown(skill.id)}
+                            aria-pressed={selectedSkillId === skill.id}
+                        >
+                            <span className="skill-map-node-name">{skill.name}</span>
+                            {visibility === 'unlocked' && (
+                                <span className="skill-map-node-xp">{skill.xp ?? 0} XP</span>
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
         </section>
     );

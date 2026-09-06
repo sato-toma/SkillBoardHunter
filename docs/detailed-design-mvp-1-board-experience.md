@@ -9,8 +9,8 @@ Draft
 | Phase | Status |
 | --- | --- |
 | Plan | Revised 2026-09-01 |
-| Change scope | Needs update |
-| Detailed design | Interaction confirmed 2026-09-01, write-up in progress |
+| Change scope | Revised 2026-09-06 |
+| Detailed design | Board zoom interaction confirmed 2026-09-06 |
 | Implementation | Partial, discovery drilling not yet built |
 | Unit test | In progress |
 | Functional test | Not started |
@@ -167,6 +167,27 @@ The current design is considered valid only if:
   implementation needs a component/functional test covering: pick active skill -> immediate
   neighbors shown -> expand up/down -> siblings appear -> recenter on a revealed node -> active
   skill position stable across expands.
+
+## Interaction Validation: Board wheel zoom
+
+- Prototype A: `prototypes/map-zoom/prototype-a-pointer-anchored.html`. The location below the
+  mouse pointer stays fixed as the Board zooms.
+- Prototype B: `prototypes/map-zoom/prototype-b-center-anchored.html`. The Board center stays
+  fixed as the Board zooms.
+- User-selected model: Prototype A, pointer-anchored zoom (confirmed 2026-09-06).
+- Core action sequence: Hover the Board -> scroll up to zoom in or down to zoom out -> continue
+  selecting, linking, or dragging a visible Skill.
+- Feedback after each action: The Board scales from 50% to 250%, while the location below the
+  pointer remains fixed. The browser page does not scroll while the pointer is over the Board.
+- Invalid or blocked action behavior: Further zoom input at either scale limit has no visual
+  effect and still does not scroll the page.
+- Undo or recovery behavior: Zoom is view-only and is reset to 100% when the Board is remounted.
+  It is not persisted.
+- Rejected alternatives: Prototype B was rejected because center-anchored zoom moves the Skill
+  being inspected away from the pointer.
+- Verification method: Component test verifies wheel direction, pointer-anchored translation,
+  zoom bounds, and default prevention; manual test verifies selecting, linking, and dragging
+  after zooming.
 
 ## Implementation status
 
