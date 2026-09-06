@@ -2,6 +2,7 @@ import type { SagaIterator } from 'redux-saga';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import type { SkillBoardPersistencePort } from '../application/skillBoardPersistencePort';
 import {
+    type Goal,
     levelFromXp,
     normalizeSkillName,
     normalizeSkillNotes,
@@ -27,6 +28,7 @@ import {
     skillRemoved,
     skillUpdated,
     updateGoalRequested,
+    updateRelationRequested,
     updateSkillDependenciesRequested,
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
@@ -185,6 +187,52 @@ function* handleUpdateSkillDependenciesRequested(
 
     const updatedSkill = nextBoard.skills.find((skill) => skill.id === action.payload.id);
     if (updatedSkill) yield put(skillUpdated(updatedSkill));
+}
+
+function* handleUpdateRelationRequested(
+    port: SkillBoardPersistencePort,
+    action: ReturnType<typeof updateRelationRequested>,
+): SagaIterator {
+    const { fromId, oldToId, newToId } = action.payload;
+    if (fromId === newToId) return;
+
+    const currentBoard: SkillBoard = yield select(
+        (state: SkillBoardRootState) => state.skillBoard.board,
+    );
+    if (!currentBoard.skills.some((skill) => skill.id === fromId)) return;
+
+    const updateSkillTarget = (skill: Skill): Skill => {
+        if (skill.id !== oldToId && skill.id !== newToId) return skill;
+        const prerequisiteSkillIds = (skill.prerequisiteSkillIds ?? []).filter(
+            (id) => id !== fromId,
+        );
+        return skill.id === newToId
+            ? { ...skill, prerequisiteSkillIds: [...prerequisiteSkillIds, fromId] }
+            : { ...skill, prerequisiteSkillIds };
+    };
+    const updateGoalTarget = (goal: Goal): Goal => {
+        if (goal.id !== oldToId && goal.id !== newToId) return goal;
+        const requiredSkillIds = (goal.requiredSkillIds ?? []).filter((id) => id !== fromId);
+        return goal.id === newToId
+            ? { ...goal, requiredSkillIds: [...requiredSkillIds, fromId] }
+            : { ...goal, requiredSkillIds };
+    };
+    const nextBoard: SkillBoard = {
+        ...currentBoard,
+        skills: currentBoard.skills.map(updateSkillTarget),
+        goals: currentBoard.goals?.map(updateGoalTarget),
+    };
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        nextBoard,
+    );
+
+    if (!saveResult.ok) {
+        yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
+        return;
+    }
+
+    yield put(boardLoaded(nextBoard));
 }
 
 function* handleUpdateSkillDetailsRequested(
@@ -398,6 +446,7 @@ export function* createSkillBoardSaga(port: SkillBoardPersistencePort): SagaIter
         handleUpdateSkillDependenciesRequested,
         port,
     );
+    yield takeEvery(updateRelationRequested.type, handleUpdateRelationRequested, port);
     yield takeEvery(updateSkillDetailsRequested.type, handleUpdateSkillDetailsRequested, port);
     yield takeEvery(updateSkillPositionRequested.type, handleUpdateSkillPositionRequested, port);
     yield takeEvery(loadSampleRequested.type, handleLoadSampleRequested, port);

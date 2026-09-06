@@ -13,8 +13,10 @@ type SkillMapWorkspaceProps = {
     selectedSkill: Skill | undefined;
     errorMessage: string | null;
     onSelect: (id: string) => void;
-    onToggleLink: (fromId: string, toId: string) => void;
     onMove: (id: string, x: number, y: number) => void;
+    onCreateLink: (fromId: string, toId: string) => void;
+    onRelinkLink: (fromId: string, oldToId: string, newToId: string) => void;
+    onDeleteLink: (fromId: string, toId: string) => void;
     onXpChange: (skill: Skill, xp: number) => void;
     onRemovePrerequisite: (skill: Skill, prerequisiteId: string) => void;
     onEditSave: (
@@ -30,8 +32,10 @@ export function SkillMapWorkspace({
     selectedSkill,
     errorMessage,
     onSelect,
-    onToggleLink,
     onMove,
+    onCreateLink,
+    onRelinkLink,
+    onDeleteLink,
     onXpChange,
     onRemovePrerequisite,
     onEditSave,
@@ -62,10 +66,13 @@ export function SkillMapWorkspace({
                 <>
                     <SkillMap
                         skills={skills}
+                        goals={goals}
                         selectedSkillId={selectedSkillId}
                         onSelect={onSelect}
-                        onToggleLink={onToggleLink}
                         onMove={onMove}
+                        onCreateLink={onCreateLink}
+                        onRelinkLink={onRelinkLink}
+                        onDeleteLink={onDeleteLink}
                     />
                     <SkillMapDetail
                         selectedSkill={selectedSkill}

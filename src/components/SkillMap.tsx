@@ -1,12 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { fallbackSkillLayout, type Skill, skillVisibility } from '../domain/skillBoard';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { fallbackSkillLayout, type Goal, type Skill, skillVisibility } from '../domain/skillBoard';
+
+type MapNode =
+    | {
+          id: string;
+          name: string;
+          kind: 'skill';
+          skill: Skill;
+          visibility: ReturnType<typeof skillVisibility>;
+          x: number;
+          y: number;
+      }
+    | { id: string; name: string; kind: 'goal'; goal: Goal; x: number; y: number };
+
+type Link = { fromId: string; toId: string };
 
 type SkillMapProps = {
     skills: Skill[];
+    goals: Goal[];
     selectedSkillId: string | null;
     onSelect: (id: string) => void;
-    onToggleLink: (fromId: string, toId: string) => void;
     onMove: (id: string, x: number, y: number) => void;
+    onCreateLink: (fromId: string, toId: string) => void;
+    onRelinkLink: (fromId: string, oldToId: string, newToId: string) => void;
+    onDeleteLink: (fromId: string, toId: string) => void;
 };
 
 const MAP_WIDTH = 920;
@@ -18,26 +35,39 @@ const roundViewportCoordinate = (value: number) => Math.round(value * 1000) / 10
 
 export function SkillMap({
     skills,
+    goals,
     selectedSkillId,
     onSelect,
-    onToggleLink,
     onMove,
+    onCreateLink,
+    onRelinkLink,
+    onDeleteLink,
 }: SkillMapProps) {
     const containerRef = useRef<HTMLDivElement | null>(null);
-    const [linkSourceId, setLinkSourceId] = useState<string | null>(null);
     const [viewport, setViewport] = useState({ x: 0, y: 0, scale: 1 });
+    const [linkEditMode, setLinkEditMode] = useState(false);
     const [dragPreview, setDragPreview] = useState<{
         id: string;
         x: number;
         y: number;
     } | null>(null);
+    const [linkDrag, setLinkDrag] = useState<{
+        fromId: string;
+        oldToId: string | null;
+        x: number;
+        y: number;
+        targetId: string | null;
+    } | null>(null);
 
     const positioned = useMemo(
         () =>
-            skills.map((skill) => {
+            skills.map((skill): MapNode => {
                 const fallback = fallbackSkillLayout(skill, skills);
                 const base = {
                     skill,
+                    id: skill.id,
+                    name: skill.name,
+                    kind: 'skill' as const,
                     x: skill.layoutX ?? fallback.x,
                     y: skill.layoutY ?? fallback.y,
                     visibility: skillVisibility(skill, skills),
@@ -49,27 +79,161 @@ export function SkillMap({
         [skills, dragPreview],
     );
 
-    const visible = positioned.filter((entry) => entry.visibility !== 'hidden');
-    const edges = visible.flatMap((entry) =>
-        (entry.skill.prerequisiteSkillIds ?? [])
-            .map((id) => visible.find((candidate) => candidate.skill.id === id))
-            .filter((from): from is (typeof visible)[number] => Boolean(from))
-            .map((from) => ({ from, to: entry })),
+    const visibleSkills = useMemo(
+        () =>
+            positioned.filter(
+                (entry): entry is Extract<MapNode, { kind: 'skill' }> =>
+                    entry.kind === 'skill' && entry.visibility !== 'hidden',
+            ),
+        [positioned],
+    );
+    const visible = useMemo(
+        () => [
+            ...visibleSkills,
+            ...goals.map(
+                (goal, index): MapNode => ({
+                    id: goal.id,
+                    name: goal.title,
+                    kind: 'goal',
+                    goal,
+                    x: MAP_WIDTH - 90,
+                    y: 120 + index * 150,
+                }),
+            ),
+        ],
+        [goals, visibleSkills],
+    );
+    const links = visible.flatMap((entry) => {
+        const targets =
+            entry.kind === 'skill'
+                ? (entry.skill.prerequisiteSkillIds ?? []).map((fromId) => ({
+                      fromId,
+                      toId: entry.id,
+                  }))
+                : (entry.goal.requiredSkillIds ?? []).map((fromId) => ({
+                      fromId,
+                      toId: entry.id,
+                  }));
+        return targets.filter((link) => visible.some((node) => node.id === link.fromId));
+    });
+
+    const toLocalPoint = useCallback(
+        (clientX: number, clientY: number) => {
+            const bounds = containerRef.current?.getBoundingClientRect();
+            if (!bounds) return { x: clientX, y: clientY };
+            return {
+                x: Math.round(
+                    ((clientX - bounds.left - viewport.x) / (bounds.width * viewport.scale)) *
+                        MAP_WIDTH,
+                ),
+                y: Math.round(
+                    ((clientY - bounds.top - viewport.y) / (bounds.height * viewport.scale)) *
+                        MAP_HEIGHT,
+                ),
+            };
+        },
+        [viewport],
     );
 
-    const toLocalPoint = (clientX: number, clientY: number) => {
-        const bounds = containerRef.current?.getBoundingClientRect();
-        if (!bounds) return { x: clientX, y: clientY };
-        return {
-            x: Math.round(
-                ((clientX - bounds.left - viewport.x) / (bounds.width * viewport.scale)) *
-                    MAP_WIDTH,
-            ),
-            y: Math.round(
-                ((clientY - bounds.top - viewport.y) / (bounds.height * viewport.scale)) *
-                    MAP_HEIGHT,
-            ),
+    const findNodeAt = useCallback(
+        (x: number, y: number): MapNode | undefined =>
+            visible.find((node) => Math.abs(node.x - x) <= 75 && Math.abs(node.y - y) <= 48),
+        [visible],
+    );
+
+    const startLinkDrag = (
+        event: React.PointerEvent<HTMLElement>,
+        fromId: string,
+        oldToId: string | null,
+    ) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const point = toLocalPoint(event.clientX, event.clientY);
+        setLinkDrag({ fromId, oldToId, x: point.x, y: point.y, targetId: null });
+    };
+
+    useEffect(() => {
+        if (!linkDrag) return;
+
+        const handleMove = (event: PointerEvent) => {
+            const point = toLocalPoint(event.clientX, event.clientY);
+            const target = findNodeAt(point.x, point.y);
+            setLinkDrag((current) =>
+                current
+                    ? {
+                          ...current,
+                          x: point.x,
+                          y: point.y,
+                          targetId: target && target.id !== current.fromId ? target.id : null,
+                      }
+                    : null,
+            );
         };
+        const handleUp = () => {
+            setLinkDrag((current) => {
+                if (!current) return null;
+                if (current.targetId) {
+                    if (current.oldToId) {
+                        if (current.oldToId !== current.targetId) {
+                            onRelinkLink(current.fromId, current.oldToId, current.targetId);
+                        }
+                    } else {
+                        onCreateLink(current.fromId, current.targetId);
+                    }
+                } else if (current.oldToId) {
+                    onDeleteLink(current.fromId, current.oldToId);
+                }
+                return null;
+            });
+        };
+        window.addEventListener('pointermove', handleMove);
+        window.addEventListener('pointerup', handleUp, { once: true });
+        return () => {
+            window.removeEventListener('pointermove', handleMove);
+            window.removeEventListener('pointerup', handleUp);
+        };
+    }, [findNodeAt, linkDrag, onCreateLink, onDeleteLink, onRelinkLink, toLocalPoint]);
+
+    const edges = links
+        .map((link) => ({
+            link,
+            from: visible.find((node) => node.id === link.fromId),
+            to: visible.find((node) => node.id === link.toId),
+        }))
+        .filter((edge): edge is { link: Link; from: MapNode; to: MapNode } =>
+            Boolean(edge.from && edge.to),
+        );
+
+    const handleNodePointerDown =
+        (skillId: string) => (event: React.PointerEvent<HTMLButtonElement>) => {
+            event.preventDefault();
+            const target = event.currentTarget;
+            target.setPointerCapture(event.pointerId);
+            let moved = false;
+            const handleMove = (moveEvent: PointerEvent) => {
+                moved = true;
+                const point = toLocalPoint(moveEvent.clientX, moveEvent.clientY);
+                setDragPreview({ id: skillId, ...point });
+            };
+            const handleUp = (upEvent: PointerEvent) => {
+                target.releasePointerCapture(event.pointerId);
+                window.removeEventListener('pointermove', handleMove);
+                window.removeEventListener('pointerup', handleUp);
+                if (moved) {
+                    const point = toLocalPoint(upEvent.clientX, upEvent.clientY);
+                    onMove(skillId, point.x, point.y);
+                } else {
+                    onSelect(skillId);
+                }
+                setDragPreview(null);
+            };
+            window.addEventListener('pointermove', handleMove);
+            window.addEventListener('pointerup', handleUp);
+        };
+
+    const toggleLinkEditMode = () => {
+        setLinkDrag(null);
+        setLinkEditMode((current) => !current);
     };
 
     useEffect(() => {
@@ -106,54 +270,17 @@ export function SkillMap({
         return () => container.removeEventListener('wheel', handleWheel);
     }, []);
 
-    const handlePointerDown =
-        (skillId: string) => (event: React.PointerEvent<HTMLButtonElement>) => {
-            event.preventDefault();
-            const target = event.currentTarget;
-            target.setPointerCapture(event.pointerId);
-            let moved = false;
-
-            const handleMove = (moveEvent: PointerEvent) => {
-                moved = true;
-                const point = toLocalPoint(moveEvent.clientX, moveEvent.clientY);
-                setDragPreview({ id: skillId, ...point });
-            };
-            const handleUp = (upEvent: PointerEvent) => {
-                target.releasePointerCapture(event.pointerId);
-                window.removeEventListener('pointermove', handleMove);
-                window.removeEventListener('pointerup', handleUp);
-                if (moved) {
-                    const point = toLocalPoint(upEvent.clientX, upEvent.clientY);
-                    onMove(skillId, point.x, point.y);
-                } else {
-                    handleNodeClick(skillId);
-                }
-                setDragPreview(null);
-            };
-            window.addEventListener('pointermove', handleMove);
-            window.addEventListener('pointerup', handleUp);
-        };
-
-    const handleNodeClick = (skillId: string) => {
-        onSelect(skillId);
-        if (!linkSourceId) {
-            setLinkSourceId(skillId);
-            return;
-        }
-        if (linkSourceId === skillId) {
-            setLinkSourceId(null);
-            return;
-        }
-        onToggleLink(linkSourceId, skillId);
-        setLinkSourceId(null);
-    };
-
     return (
         <section className="skill-map" aria-label="Skill map">
-            <div className="skill-map-hint">
-                {linkSourceId
-                    ? 'Click another visible Skill to connect it, or click the same Skill again to cancel.'
-                    : 'Click a Skill to select it, then click a second Skill to connect them. Drag to reposition.'}
+            <div className="skill-map-toolbar">
+                <button type="button" className="view-button" onClick={toggleLinkEditMode}>
+                    {linkEditMode ? 'Exit link editing' : 'Edit links'}
+                </button>
+                <span className="skill-map-hint">
+                    {linkEditMode
+                        ? 'Drag the small gold square to create a link. Drag a blue link end to another node to relink, or to empty space to delete.'
+                        : 'Click a Skill to select it. Edit it in the detail panel, or drag it to reposition.'}
+                </span>
             </div>
             <div className="skill-map-canvas" ref={containerRef}>
                 <div
@@ -168,41 +295,101 @@ export function SkillMap({
                         preserveAspectRatio="none"
                         aria-hidden="true"
                     >
-                        {edges.map(({ from, to }) => (
+                        {edges.map(({ link, from, to }) => (
                             <line
-                                key={`${from.skill.id}-${to.skill.id}`}
+                                key={`${link.fromId}-${link.toId}`}
                                 x1={from.x}
                                 y1={from.y}
                                 x2={to.x}
                                 y2={to.y}
                             />
                         ))}
+                        {linkDrag && (
+                            <line
+                                className={
+                                    linkDrag.targetId ? 'link-preview valid' : 'link-preview'
+                                }
+                                x1={visible.find((node) => node.id === linkDrag.fromId)?.x ?? 0}
+                                y1={visible.find((node) => node.id === linkDrag.fromId)?.y ?? 0}
+                                x2={
+                                    linkDrag.targetId
+                                        ? (visible.find((node) => node.id === linkDrag.targetId)
+                                              ?.x ?? linkDrag.x)
+                                        : linkDrag.x
+                                }
+                                y2={
+                                    linkDrag.targetId
+                                        ? (visible.find((node) => node.id === linkDrag.targetId)
+                                              ?.y ?? linkDrag.y)
+                                        : linkDrag.y
+                                }
+                            />
+                        )}
                     </svg>
-                    {visible.map(({ skill, x, y, visibility }) => (
-                        <button
-                            type="button"
-                            key={skill.id}
-                            className={[
-                                'skill-map-node',
-                                `visibility-${visibility}`,
-                                selectedSkillId === skill.id ? 'selected' : '',
-                                linkSourceId === skill.id ? 'linking' : '',
-                            ]
-                                .filter(Boolean)
-                                .join(' ')}
-                            style={{
-                                left: `${(x / MAP_WIDTH) * 100}%`,
-                                top: `${(y / MAP_HEIGHT) * 100}%`,
-                            }}
-                            onPointerDown={handlePointerDown(skill.id)}
-                            aria-pressed={selectedSkillId === skill.id}
-                        >
-                            <span className="skill-map-node-name">{skill.name}</span>
-                            {visibility === 'unlocked' && (
-                                <span className="skill-map-node-xp">{skill.xp ?? 0} XP</span>
-                            )}
-                        </button>
-                    ))}
+                    {visible.map((node) => {
+                        const skill = node.kind === 'skill' ? node.skill : undefined;
+                        const visibility = skill ? skillVisibility(skill, skills) : undefined;
+                        return (
+                            <div
+                                className="skill-map-node-wrap"
+                                key={node.id}
+                                style={{
+                                    left: `${(node.x / MAP_WIDTH) * 100}%`,
+                                    top: `${(node.y / MAP_HEIGHT) * 100}%`,
+                                }}
+                            >
+                                <button
+                                    type="button"
+                                    className={[
+                                        'skill-map-node',
+                                        node.kind === 'goal' ? 'goal' : '',
+                                        visibility ? `visibility-${visibility}` : '',
+                                        selectedSkillId === node.id ? 'selected' : '',
+                                        linkDrag?.targetId === node.id ? 'link-drop-target' : '',
+                                    ]
+                                        .filter(Boolean)
+                                        .join(' ')}
+                                    onPointerDown={
+                                        node.kind === 'skill' && !linkEditMode
+                                            ? handleNodePointerDown(node.id)
+                                            : undefined
+                                    }
+                                    aria-pressed={selectedSkillId === node.id}
+                                >
+                                    <span className="skill-map-node-name">{node.name}</span>
+                                    {skill && visibility === 'unlocked' && (
+                                        <span className="skill-map-node-xp">
+                                            {skill.xp ?? 0} XP
+                                        </span>
+                                    )}
+                                    {linkEditMode && node.kind === 'skill' && (
+                                        <span
+                                            className="skill-map-link-port"
+                                            title="Drag to create a link"
+                                            onPointerDown={(event) =>
+                                                startLinkDrag(event, node.id, null)
+                                            }
+                                        />
+                                    )}
+                                </button>
+                            </div>
+                        );
+                    })}
+                    {linkEditMode &&
+                        edges.map((edge) => (
+                            <span
+                                className="skill-map-link-handle"
+                                key={`${edge.link.fromId}-${edge.link.toId}`}
+                                title="Drag to relink or delete"
+                                style={{
+                                    left: `${(edge.to.x / MAP_WIDTH) * 100}%`,
+                                    top: `${(edge.to.y / MAP_HEIGHT) * 100}%`,
+                                }}
+                                onPointerDown={(event) =>
+                                    startLinkDrag(event, edge.link.fromId, edge.link.toId)
+                                }
+                            />
+                        ))}
                 </div>
             </div>
         </section>

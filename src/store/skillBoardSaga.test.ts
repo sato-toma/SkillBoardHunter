@@ -8,6 +8,7 @@ import {
     addSkillRequested,
     appStarted,
     boardLoaded,
+    updateRelationRequested,
     updateSkillDetailsRequested,
 } from './skillBoardSlice';
 import { createAppStore } from './store';
@@ -119,5 +120,39 @@ describe('skillBoardSaga', () => {
             ],
         });
         expect(store.getState().skillBoard.board.skills[0]?.notes?.[0]?.links).toHaveLength(1);
+    });
+
+    it('relinks a relationship to a Goal in one persisted board update', async () => {
+        const save = vi.fn(async () => ({ ok: true as const, value: undefined }));
+        const port: SkillBoardPersistencePort = {
+            load: async () => ({ ok: true, value: { version: 1, skills: [] } }),
+            save,
+            clear: async () => ({ ok: true, value: undefined }),
+        };
+        const store = createAppStore(port);
+        store.dispatch(
+            boardLoaded({
+                version: 1,
+                skills: [
+                    { id: 'react', name: 'React' },
+                    { id: 'ui', name: 'Product UI', prerequisiteSkillIds: ['react'] },
+                ],
+                goals: [{ id: 'ship', title: 'Ship', requiredSkillIds: [] }],
+            }),
+        );
+
+        store.dispatch(
+            updateRelationRequested({ fromId: 'react', oldToId: 'ui', newToId: 'ship' }),
+        );
+        await flushSaga();
+
+        expect(save).toHaveBeenCalledWith({
+            version: 1,
+            skills: [
+                { id: 'react', name: 'React' },
+                { id: 'ui', name: 'Product UI', prerequisiteSkillIds: [] },
+            ],
+            goals: [{ id: 'ship', title: 'Ship', requiredSkillIds: ['react'] }],
+        });
     });
 });

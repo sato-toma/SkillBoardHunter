@@ -215,9 +215,19 @@
     min-width: 0;
 }
 
+.skill-map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.skill-map-toolbar .view-button {
+    flex: 0 0 auto;
+}
+
 .skill-map-hint {
     min-height: 18px;
-    margin-bottom: 10px;
     color: #61736c;
     font-size: 12px;
 }
@@ -243,6 +253,11 @@
     width: 100%;
     height: 100%;
     transform-origin: 0 0;
+}
+
+.skill-map-node-wrap {
+    position: absolute;
+    transform: translate(-50%, -50%);
 }
 
 .skill-map-canvas::after {
@@ -274,13 +289,13 @@
 .skill-map-node {
     position: absolute;
     display: grid;
-    width: 112px;
-    min-height: 74px;
+    width: 132px;
+    min-height: 78px;
     transform: translate(-50%, -50%);
     place-content: center;
     gap: 5px;
     border: 1px solid #668b70;
-    border-radius: 50%;
+    border-radius: 8px;
     padding: 12px;
     background: radial-gradient(circle at 35% 25%, #31513d, #14271b 72%);
     box-shadow: 0 0 0 5px rgba(12, 25, 16, 0.5);
@@ -291,17 +306,69 @@
     transition:
         filter 180ms ease,
         opacity 180ms ease,
-        transform 180ms ease;
+        border-color 180ms ease,
+        box-shadow 180ms ease;
     touch-action: none;
 }
 
-.skill-map-node:hover,
-.skill-map-node.selected {
+.skill-map-node-wrap .skill-map-node {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+}
+
+.skill-map-node.goal {
+    border-radius: 8px;
+    border-color: #d06443;
+    background: linear-gradient(145deg, #a24a30, #6f3327);
+}
+
+.skill-map-node.link-drop-target {
+    border-color: #62d39b;
+    box-shadow: 0 0 0 6px rgba(98, 211, 155, 0.24);
+}
+
+.skill-map-link-port,
+.skill-map-link-handle {
+    position: absolute;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    transform: translate(-50%, -50%);
+    border: 2px solid #f1c875;
+    border-radius: 3px;
+    background: #f1c875;
+    cursor: grab;
+}
+
+.skill-map-link-port {
+    right: -15px;
+    top: 50%;
+}
+
+.skill-map-link-handle {
+    border-color: #83c8eb;
+    background: #83c8eb;
+}
+
+.skill-map-edges .link-preview {
+    stroke: #f1c875;
+    stroke-dasharray: 7 5;
+    stroke-width: 3;
+}
+
+.skill-map-edges .link-preview.valid {
+    stroke: #62d39b;
+}
+
+.skill-map-node-wrap .skill-map-node:hover,
+.skill-map-node-wrap .skill-map-node.selected {
     border-color: #f1c875;
     box-shadow:
         0 0 0 5px rgba(241, 200, 117, 0.12),
         0 0 22px rgba(241, 200, 117, 0.35);
-    transform: translate(-50%, -50%) scale(1.05);
+    transform: none;
 }
 
 .skill-map-node.linking {

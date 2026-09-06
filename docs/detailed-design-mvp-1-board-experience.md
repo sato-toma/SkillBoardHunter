@@ -82,6 +82,20 @@ The previous model (Map = editing surface, Focus = generic local inspection) is 
 - Relationship editing is not triggered by a normal node click. It remains a separate operation
   with an explicit entry point.
 
+### Relationship editing interaction
+
+- Link editing is entered through the Board's explicit link-editing affordance.
+- A small port on a Skill starts a relationship drag. The node body remains reserved for
+  selection and Discovery center changes.
+- The drag preview line follows the pointer. A node under the pointer is highlighted as the drop
+  target, and releasing on it creates one relationship from the source Skill to that target.
+- A connected relationship has a visible target-end handle. Dragging that handle to another node
+  relinks the relationship; releasing it on empty board space deletes the relationship.
+- A target may be another Skill or a Goal. Skill targets update `prerequisiteSkillIds`; Goal
+  targets update `requiredSkillIds`.
+- Duplicate relationships between the same source and target are ignored. Relationship changes
+  are persisted as one board update.
+
 ## Scope
 
 ### In scope
@@ -110,6 +124,8 @@ The previous model (Map = editing surface, Focus = generic local inspection) is 
   skill (goal-side above, skill-side below). Not used for search across the whole board.
 - The Node edit page is only for small field updates, not graph structure.
 - The current board still uses the existing Skill/Goal model for now.
+- Relationship editing uses the existing Skill/Goal fields and does not introduce a unified Node
+  model.
 
 ## Key constraints
 
@@ -179,6 +195,18 @@ The current design is considered valid only if:
   -> immediate neighbors shown -> expand up/down -> siblings appear -> recenter on a revealed node
   -> active skill position stable across expands. The current functional test is
   `tests/e2e/map-discovery.spec.ts`.
+
+## Interaction Validation: Relationship editing
+
+- Prototype E: `prototypes/relationship-editing/prototype-e-pointer-ports.html`.
+- User-selected model: small square port affordances with pointer-tracked drag feedback.
+- Core action sequence: enter link editing -> drag a Skill port -> release over a highlighted
+  target node -> see the new edge and target handle -> drag the target handle to another node to
+  relink or to empty space to delete.
+- User rejected text-based `IN`/`OUT` labels and native HTML5 drag-and-drop prototypes because
+  the operation point, drag preview, and drop feedback were unclear.
+- Verification method: Playwright covers creating a link from a Skill port. Component/domain
+  tests must cover relinking, deletion, duplicate suppression, and Goal targets.
 
 ## Interaction Validation: Board wheel zoom
 

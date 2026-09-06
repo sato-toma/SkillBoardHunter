@@ -61,6 +61,14 @@ const skillBoardSlice = createSlice({
                 prerequisiteSkillIds: string[];
             }>,
         ) => undefined,
+        updateRelationRequested: (
+            _state,
+            _action: PayloadAction<{
+                fromId: string;
+                oldToId: string | null;
+                newToId: string | null;
+            }>,
+        ) => undefined,
         updateSkillDetailsRequested: (
             _state,
             _action: PayloadAction<{
@@ -181,6 +189,7 @@ export const {
     removeSkillRequested,
     updateSkillRequested,
     updateSkillDependenciesRequested,
+    updateRelationRequested,
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
     loadSampleRequested,

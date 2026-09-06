@@ -10,6 +10,7 @@ import {
     addSkillRequested,
     appStarted,
     loadSampleRequested,
+    updateRelationRequested,
     updateSkillDependenciesRequested,
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
@@ -38,6 +39,18 @@ function App() {
         requiredSkills.length > 0 && requiredSkills.every((skill) => (skill.xp ?? 0) >= 60);
     const errorMessage = useAppSelector((state) => state.skillBoard.errorMessage);
 
+    const createLink = (fromId: string, toId: string) => {
+        if (fromId !== toId) {
+            dispatch(updateRelationRequested({ fromId, oldToId: null, newToId: toId }));
+        }
+    };
+
+    const relinkLink = (fromId: string, oldToId: string, newToId: string) => {
+        if (fromId !== newToId) {
+            dispatch(updateRelationRequested({ fromId, oldToId, newToId }));
+        }
+    };
+
     useEffect(() => {
         dispatch(appStarted());
     }, [dispatch]);
@@ -50,21 +63,6 @@ function App() {
             setSelectedSkillId(skills[0]?.id ?? null);
         }
     }, [skills, selectedSkillId]);
-
-    const handleToggleLink = (fromId: string, toId: string) => {
-        const target = skills.find((skill) => skill.id === toId);
-        if (!target || fromId === toId) return;
-        const current = target.prerequisiteSkillIds ?? [];
-        const next = current.includes(fromId)
-            ? current.filter((id) => id !== fromId)
-            : [...current, fromId];
-        dispatch(
-            updateSkillDependenciesRequested({
-                id: toId,
-                prerequisiteSkillIds: next,
-            }),
-        );
-    };
 
     return (
         <main className="app-shell product-shell">
@@ -95,7 +93,11 @@ function App() {
                     selectedSkill={selectedSkill}
                     errorMessage={errorMessage}
                     onSelect={setSelectedSkillId}
-                    onToggleLink={handleToggleLink}
+                    onCreateLink={createLink}
+                    onRelinkLink={relinkLink}
+                    onDeleteLink={(fromId, toId) =>
+                        dispatch(updateRelationRequested({ fromId, oldToId: toId, newToId: null }))
+                    }
                     onMove={(id, x, y) =>
                         dispatch(
                             updateSkillPositionRequested({
