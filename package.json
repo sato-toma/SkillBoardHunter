@@ -5,7 +5,8 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "tsc -b && vite build",
+        "build": "npm run generate:sbom && tsc -b && vite build",
+        "generate:sbom": "node scripts/generate-sbom.mjs",
         "lint": "biome lint .",
         "format": "biome format --write .",
         "format:check": "biome format .",

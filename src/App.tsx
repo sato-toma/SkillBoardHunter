@@ -5,6 +5,7 @@ import { GoalsView } from './components/GoalsView';
 import { SkillDeck } from './components/SkillDeck';
 import { SkillMapWorkspace } from './components/SkillMapWorkspace';
 import { WorkspaceNav, type WorkspaceView } from './components/WorkspaceNav';
+import { LicensesView } from './components/LicensesView';
 import { exportSkillBoardToml } from './application/skillBoardToml';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import {
@@ -161,6 +162,7 @@ function App() {
                 />
             )}
             {activeView === 'goals' && <GoalsView goals={board.goals ?? []} />}
+            {activeView === 'licenses' && <LicensesView />}
         </main>
     );
 }

@@ -1270,6 +1270,43 @@
     font-size: 12px;
 }
 
+.license-summary,
+.license-state {
+    margin: 0;
+    color: #52615d;
+}
+
+.license-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid #b8c8bd;
+}
+
+.license-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #173f3a;
+    font-size: 13px;
+    text-align: left;
+}
+
+.license-table th,
+.license-table td {
+    border-bottom: 1px solid #d2ddd5;
+    padding: 12px 10px;
+    white-space: nowrap;
+}
+
+.license-table thead th {
+    color: #61736c;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.license-table tbody th {
+    font-weight: 700;
+}
+
 .focus-lane {
     display: flex;
     align-items: center;

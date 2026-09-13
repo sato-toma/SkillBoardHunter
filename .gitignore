@@ -1,5 +1,6 @@
 node_modules/
 dist/
+public/sbom.json
 coverage/
 playwright-report/
 test-results/

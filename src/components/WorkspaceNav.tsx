@@ -1,4 +1,4 @@
-export type WorkspaceView = 'map' | 'skills' | 'goals';
+export type WorkspaceView = 'map' | 'skills' | 'goals' | 'licenses';
 
 type WorkspaceNavProps = {
     activeView: WorkspaceView;
@@ -11,6 +11,7 @@ export function WorkspaceNav({ activeView, skillCount, onViewChange }: Workspace
         ['map', 'Map', 'Your territory'],
         ['skills', 'Skills', `${skillCount} in library`],
         ['goals', 'Goals', 'What comes next'],
+        ['licenses', 'Licenses', 'Open source inventory'],
     ] as const;
 
     return (
