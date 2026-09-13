@@ -43,18 +43,18 @@
 
 ### TI-0002: TOMLパーサー選定とSemVer互換判定の実装方針
 
-- Status: Open
+- Status: Resolved
 - Discovered: 2026-08-21
 - Context: TOML Import/Exportの初期設計は作成済みだが、実装ライブラリの選定が未確定。
 - Impact: ライブラリ選定により、型安全性、エラーメッセージ品質、保守性が変わる。
-- Current understanding: `formatVersion` はSemVerで管理し、major不一致を拒否する方針。
+- Current understanding: `formatVersion` はSemVerで管理し、major不一致を拒否する方針。TOMLのparse/stringifyには`smol-toml`を使用する。
 - Options considered:
 	- A. `@iarna/toml` を採用する
 	- B. 別の軽量TOMLライブラリを採用する
-- Next action: MVP-1 Implementation開始前に1ライブラリを確定し、失敗時エラー分類を実装する。
+- Next action: `smol-toml`を使ったserializer/parserと失敗時エラー分類を実装する。
 - Revisit when: `docs/detailed-design-mvp-1-toml-io.md` のImplementation着手時。
 - Related design/ADR: `docs/detailed-design-mvp-1-toml-io.md`
-- Resolution and validation:
+- Resolution and validation: `smol-toml@1.8.0`を採用。ブラウザ向けのESM、TypeScript型定義、parse/stringifyの両方に対応していることを確認した。`npm run typecheck`は2026-09-13に成功。
 
 ### TI-0003: ボード体験設計の未確定項目（レベル、実績、表示形式）
 

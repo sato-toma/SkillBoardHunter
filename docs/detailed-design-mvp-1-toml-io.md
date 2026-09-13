@@ -2,7 +2,7 @@
 
 ## Status
 
-Deferred
+Ready for implementation
 
 ## Phase Status
 
@@ -10,7 +10,7 @@ Deferred
 | --- | --- | --- |
 | Plan | Complete | `docs/development-plan.md` MVP-1 |
 | Change Scope | Complete | This document |
-| Detailed Design | Deferred | Experience-first方針により実装保留 |
+| Detailed Design | Complete | `smol-toml` を採用。Import/Exportの実装に着手可能 |
 | Implementation | Not started |  |
 | Unit Test | Not started |  |
 | Functional Test | Not started |  |
@@ -62,9 +62,7 @@ SkillBoardのデータをTOMLとしてExport/Importできるようにし、将�
 
 ## Open Questions
 
-- TOMLパーサーをどれにするか（例: `@iarna/toml` など）
-  - Owner: プロダクトオーナー
-  - Deadline or decision point: Implementation開始前
+なし。TOMLパーサーは `smol-toml` を採用する。
 
 ## User Flow and Acceptance Criteria
 
@@ -193,12 +191,16 @@ UI input/file -> TOML parser -> compatibility + validation -> Redux action -> sa
 | SemVerでformatVersion管理 | 互換ルールが明確で拡張しやすい | 互換判定実装が必要 | 採用 |
 | 整数版（schemaVersion=1） | 実装が簡単 | minor/patchの意図を表しにくい | 不採用 |
 | Importをmergeする | 既存データ保持しやすい | 競合解決が複雑になる | 不採用（MVP-1は全置換） |
+| `smol-toml` を使う | ブラウザ向け、ESM、TypeScript型定義、parse/stringify対応 | スキーマ検証は別途必要 | 採用 |
+| `toml` を使う | TOML parseに対応 | stringify対応が確認できず、Exportに不向き | 不採用 |
+| `@iarna/toml` を使う | parse/stringifyに対応 | 更新が古く、現行構成でのESM/型定義対応が弱い | 不採用 |
 
 ## Implementation Checklist
 
 - [x] Plan: scope, priority, and initial acceptance criteria confirmed
 - [x] Change Scope: affected modules, data, platforms, and risks identified
-- [ ] Detailed Design: open questions resolved and design approved
+- [x] Detailed Design: open questions resolved and design approved
+- [x] TOML parser selected: `smol-toml`
 - [ ] Update ADR if the architecture changes
 - [ ] Implementation: production code completed
 - [ ] Unit Test: focused unit tests added and passing
