@@ -87,6 +87,7 @@ const skillBoardSlice = createSlice({
             }>,
         ) => undefined,
         loadSampleRequested: () => undefined,
+        importTomlRequested: (_state, _action: PayloadAction<{ source: string }>) => undefined,
         updateGoalRequested: (
             _state,
             _action: PayloadAction<{
@@ -193,6 +194,7 @@ export const {
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
     loadSampleRequested,
+    importTomlRequested,
     updateGoalRequested,
     removeGoalRequested,
     boardLoaded,

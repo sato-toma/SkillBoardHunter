@@ -11,8 +11,8 @@ Ready for implementation
 | Plan | Complete | `docs/development-plan.md` MVP-1 |
 | Change Scope | Complete | This document |
 | Detailed Design | Complete | `smol-toml` を採用。Import/Exportの実装に着手可能 |
-| Implementation | Not started |  |
-| Unit Test | Not started |  |
+| Implementation | Complete | `src/application/skillBoardToml.ts`, Redux Saga, and header controls implemented |
+| Unit Test | Complete | TOML conversion and import saga tests pass |
 | Functional Test | Not started |  |
 
 ## Related Documents
@@ -202,8 +202,8 @@ UI input/file -> TOML parser -> compatibility + validation -> Redux action -> sa
 - [x] Detailed Design: open questions resolved and design approved
 - [x] TOML parser selected: `smol-toml`
 - [ ] Update ADR if the architecture changes
-- [ ] Implementation: production code completed
-- [ ] Unit Test: focused unit tests added and passing
+- [x] Implementation: production code completed
+- [x] Unit Test: focused unit tests added and passing
 - [ ] Functional Test: acceptance criteria verified
 - [ ] Run validation commands and record results
 - [ ] Record remaining technical issues

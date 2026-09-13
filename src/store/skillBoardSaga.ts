@@ -1,6 +1,7 @@
 import type { SagaIterator } from 'redux-saga';
 import { call, put, select, takeEvery } from 'redux-saga/effects';
 import type { SkillBoardPersistencePort } from '../application/skillBoardPersistencePort';
+import { importSkillBoardToml, SkillBoardTomlError } from '../application/skillBoardToml';
 import {
     type Goal,
     levelFromXp,
@@ -19,6 +20,7 @@ import {
     goalAdded,
     goalRemoved,
     goalUpdated,
+    importTomlRequested,
     loadSampleRequested,
     persistenceFailed,
     removeGoalRequested,
@@ -332,6 +334,32 @@ function* handleLoadSampleRequested(port: SkillBoardPersistencePort): SagaIterat
     yield put(boardLoaded(board));
 }
 
+function* handleImportTomlRequested(
+    port: SkillBoardPersistencePort,
+    action: ReturnType<typeof importTomlRequested>,
+): SagaIterator {
+    let board: SkillBoard;
+    try {
+        board = importSkillBoardToml(action.payload.source);
+    } catch (error) {
+        const message =
+            error instanceof SkillBoardTomlError ? error.message : 'Failed to import TOML.';
+        yield put(persistenceFailed({ message }));
+        return;
+    }
+
+    const saveResult: Awaited<ReturnType<SkillBoardPersistencePort['save']>> = yield call(
+        [port, port.save],
+        board,
+    );
+    if (!saveResult.ok) {
+        yield put(persistenceFailed({ message: STORAGE_FAILURE_MESSAGE }));
+        return;
+    }
+
+    yield put(boardLoaded(board));
+}
+
 function* handleUpdateGoalRequested(
     port: SkillBoardPersistencePort,
     action: ReturnType<typeof updateGoalRequested>,
@@ -450,4 +478,5 @@ export function* createSkillBoardSaga(port: SkillBoardPersistencePort): SagaIter
     yield takeEvery(updateSkillDetailsRequested.type, handleUpdateSkillDetailsRequested, port);
     yield takeEvery(updateSkillPositionRequested.type, handleUpdateSkillPositionRequested, port);
     yield takeEvery(loadSampleRequested.type, handleLoadSampleRequested, port);
+    yield takeEvery(importTomlRequested.type, handleImportTomlRequested, port);
 }

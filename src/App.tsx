@@ -5,6 +5,7 @@ import { GoalsView } from './components/GoalsView';
 import { SkillDeck } from './components/SkillDeck';
 import { SkillMapWorkspace } from './components/SkillMapWorkspace';
 import { WorkspaceNav, type WorkspaceView } from './components/WorkspaceNav';
+import { exportSkillBoardToml } from './application/skillBoardToml';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import {
     addSkillRequested,
@@ -15,6 +16,7 @@ import {
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
     updateSkillRequested,
+    importTomlRequested,
 } from './store/skillBoardSlice';
 import './App.css';
 
@@ -38,6 +40,20 @@ function App() {
     const goalUnlocked =
         requiredSkills.length > 0 && requiredSkills.every((skill) => (skill.xp ?? 0) >= 60);
     const errorMessage = useAppSelector((state) => state.skillBoard.errorMessage);
+
+    const exportBoard = () => {
+        const blob = new Blob([exportSkillBoardToml(board)], { type: 'application/toml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'skillboard.toml';
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const importBoard = async (file: File) => {
+        dispatch(importTomlRequested({ source: await file.text() }));
+    };
 
     const createLink = (fromId: string, toId: string) => {
         if (fromId !== toId) {
@@ -71,7 +87,13 @@ function App() {
                 skillCount={skills.length}
                 onViewChange={setActiveView}
             />
-            <AppHeader goal={goal} onLoadSample={() => dispatch(loadSampleRequested())} />
+            <AppHeader
+                goal={goal}
+                errorMessage={errorMessage}
+                onLoadSample={() => dispatch(loadSampleRequested())}
+                onExport={exportBoard}
+                onImport={importBoard}
+            />
             {activeView === 'skills' && (
                 <SkillDeck
                     skills={skills}

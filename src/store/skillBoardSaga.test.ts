@@ -8,6 +8,7 @@ import {
     addSkillRequested,
     appStarted,
     boardLoaded,
+    importTomlRequested,
     updateRelationRequested,
     updateSkillDetailsRequested,
 } from './skillBoardSlice';
@@ -154,5 +155,58 @@ describe('skillBoardSaga', () => {
             ],
             goals: [{ id: 'ship', title: 'Ship', requiredSkillIds: ['react'] }],
         });
+    });
+
+    it('validates, saves, and replaces the board on TOML import', async () => {
+        const save = vi.fn(async () => ({ ok: true as const, value: undefined }));
+        const port: SkillBoardPersistencePort = {
+            load: async () => ({ ok: true, value: { version: 1, skills: [] } }),
+            save,
+            clear: async () => ({ ok: true, value: undefined }),
+        };
+        const store = createAppStore(port);
+
+        store.dispatch(boardLoaded({ version: 1, skills: [{ id: 'old', name: 'Old skill' }] }));
+        store.dispatch(
+            importTomlRequested({
+                source: `
+                    [meta]
+                    format = "skillboard"
+                    formatVersion = "1.0.0"
+                    [board]
+                    id = "default"
+                    [[skills]]
+                    id = "react"
+                    name = "React"
+                `,
+            }),
+        );
+        await flushSaga();
+
+        expect(save).toHaveBeenCalledWith({
+            version: 1,
+            skills: [{ id: 'react', name: 'React' }],
+            goals: [],
+        });
+        expect(store.getState().skillBoard.board.skills).toEqual([{ id: 'react', name: 'React' }]);
+    });
+
+    it('keeps the current board when TOML import is invalid', async () => {
+        const save = vi.fn(async () => ({ ok: true as const, value: undefined }));
+        const port: SkillBoardPersistencePort = {
+            load: async () => ({ ok: true, value: { version: 1, skills: [] } }),
+            save,
+            clear: async () => ({ ok: true, value: undefined }),
+        };
+        const store = createAppStore(port);
+        const currentBoard = { version: 1 as const, skills: [{ id: 'old', name: 'Old skill' }] };
+        store.dispatch(boardLoaded(currentBoard));
+
+        store.dispatch(importTomlRequested({ source: 'invalid = [toml' }));
+        await flushSaga();
+
+        expect(save).not.toHaveBeenCalled();
+        expect(store.getState().skillBoard.board).toEqual(currentBoard);
+        expect(store.getState().skillBoard.errorMessage).toContain('invalid TOML');
     });
 });

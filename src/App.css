@@ -80,6 +80,36 @@
     color: #52615d;
 }
 
+.app-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.sample-button {
+    border: 1px solid #9bb3a8;
+    padding: 8px 10px;
+    background: transparent;
+    color: #42665d;
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+}
+
+.sample-button:hover {
+    border-color: #d06443;
+    color: #173f3a;
+}
+
+.app-header-error {
+    flex-basis: 100%;
+    margin: 0;
+    color: #b44932;
+    font-size: 12px;
+}
+
 .eyebrow {
     margin: 0 0 12px;
     color: #c35c38;
