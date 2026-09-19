@@ -1,23 +1,23 @@
 import { useEffect, useState } from 'react';
+import { exportSkillBoardToml } from './application/skillBoardToml';
 import { AppHeader } from './components/AppHeader';
 import { GoalStatus } from './components/GoalStatus';
 import { GoalsView } from './components/GoalsView';
+import { LicensesView } from './components/LicensesView';
 import { SkillDeck } from './components/SkillDeck';
 import { SkillMapWorkspace } from './components/SkillMapWorkspace';
 import { WorkspaceNav, type WorkspaceView } from './components/WorkspaceNav';
-import { LicensesView } from './components/LicensesView';
-import { exportSkillBoardToml } from './application/skillBoardToml';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import {
     addSkillRequested,
     appStarted,
+    importTomlRequested,
     loadSampleRequested,
     updateRelationRequested,
     updateSkillDependenciesRequested,
     updateSkillDetailsRequested,
     updateSkillPositionRequested,
     updateSkillRequested,
-    importTomlRequested,
 } from './store/skillBoardSlice';
 import './App.css';
 
